@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard - Travel Agency</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <a class="brand" href="/dashboard">
+      <img src="/logo.svg" alt="logo" style="height:28px;">
+      <span>Travel Agency</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/new-trip">➕ New Trip</a>
+      <a href="/trips">📋 View Trips</a>
+      <a href="/drivers">🚗 Drivers</a>
+    </div>
+
+    <div class="right-controls">
+      <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="container">
+
+    <!-- Stats Card -->
+    <div class="card">
+      <h1>Dashboard</h1>
+
+      <div class="stats" style="margin-top:18px;">
+        <div class="stat-card">
+          <h3>Total Trips</h3>
+          <p><%= stats.total %></p>
+        </div>
+
+        <div class="stat-card">
+          <h3>Today's Departures (<%= today %>)</h3>
+          <p><%= stats.today %></p>
+        </div>
+
+        <div class="stat-card">
+          <h3>Total Revenue</h3>
+          <p>₹<%= Number(stats.revenue || 0).toFixed(2) %></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DRIVER PIE CHART CARD -->
+    <div class="card" style="margin-top:28px;">
+      <h2>Driver Status Overview</h2>
+
+      <p class="muted small" style="margin-bottom:12px;">
+        Total Drivers: <strong><%= stats.totalDrivers %></strong>
+      </p>
+
+      <div style="width:100%; max-width:420px; height:300px; margin-top:20px;">
+        <canvas id="driverPieChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- PIE CHART SCRIPT -->
+  <script>
+    const freeDrivers = Number("<%= stats.freeDrivers %>");
+    const busyDrivers = Number("<%= stats.busyDrivers %>");
+
+    const ctx = document.getElementById('driverPieChart');
+
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Available Drivers', 'Drivers on Trip'],
+        datasets: [{
+          data: [freeDrivers, busyDrivers],
+          backgroundColor: ['#34d399', '#f87171'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,   // IMPORTANT FIX
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  </script>
+
+  <script src="/main.js"></script>
+</body>
+</html>

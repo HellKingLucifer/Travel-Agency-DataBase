@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Trip Invoice</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #fff;
+      color: #111;
+    }
+
+    .invoice-box {
+      max-width: 800px;
+      margin: auto;
+      padding: 28px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    h2 { margin-bottom: 0; }
+    h3 { margin: 0 0 10px 0; }
+
+    .section {
+      margin-top: 24px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed #ddd;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .badge-yes { background: #dcfce7; color: #047857; }
+    .badge-no  { background: #fee2e2; color: #b91c1c; }
+
+    .label {
+      font-weight: bold;
+      display: inline-block;
+      width: 140px;
+    }
+
+    @media print {
+      .no-print { display: none; }
+      body { margin: 0; background: white; }
+      .invoice-box { border: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="invoice-box">
+
+  <!-- HEADER -->
+  <h2>Trip Invoice</h2>
+  <p class="muted">Trip ID: <strong><%= trip.id %></strong></p>
+
+  <!-- CUSTOMER SECTION -->
+  <div class="section">
+    <h3>Customer Details</h3>
+
+    <p><span class="label">Name:</span> <%= trip.customer_name %></p>
+    <p><span class="label">Phone:</span> <%= trip.phone_number %></p>
+
+    <% if (trip.customer_id) { %>
+      <p><span class="label">Customer ID:</span> <%= trip.customer_id %></p>
+    <% } %>
+  </div>
+
+  <!-- ROUTE SECTION -->
+  <div class="section">
+    <h3>Travel Route</h3>
+
+    <p><span class="label">From:</span> <%= trip.departure_place %></p>
+    <p class="muted"><span class="label">Date/Time:</span> <%= trip.departure_date %> — <%= trip.departure_time %></p>
+
+    <br>
+
+    <p><span class="label">To:</span> <%= trip.arrival_place %></p>
+    <p class="muted"><span class="label">Date/Time:</span> <%= trip.arrival_date %> — <%= trip.arrival_time %></p>
+  </div>
+
+  <!-- DRIVER SECTION -->
+  <div class="section">
+    <h3>Driver & Vehicle</h3>
+
+    <p><span class="label">Driver:</span> <%= trip.assigned_driver || "-" %></p>
+    <p><span class="label">Driver Phone:</span> <%= trip.driver_phone || "-" %></p>
+
+    <p><span class="label">Car:</span> <%= trip.assigned_car || "-" %></p>
+    <p><span class="label">Car Number:</span> <%= trip.car_number || "-" %></p>
+  </div>
+
+  <!-- PAYMENT SECTION -->
+  <div class="section">
+    <h3>Payment</h3>
+
+    <p><span class="label">Fee:</span> ₹<%= Number(trip.travelling_fee).toFixed(2) %></p>
+
+    <% if (trip.includes_toll) { %>
+      <span class="badge badge-yes">Toll Included</span>
+    <% } else { %>
+      <span class="badge badge-no">Toll Not Included</span>
+    <% } %>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="section">
+    <p class="muted">Created At: <%= trip.created_at %></p>
+  </div>
+
+  <!-- PRINT BUTTON -->
+  <button class="no-print" onclick="window.print()" 
+          style="margin-top:20px; padding:10px 16px; cursor:pointer;">
+    🧾 Print Invoice
+  </button>
+
+</div>
+
+</body>
+</html>

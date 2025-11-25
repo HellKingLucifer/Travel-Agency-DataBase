@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>New Driver</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <a class="brand" href="/dashboard">
+      <img src="/icons/dashboard.svg" style="height:26px;">
+      <span>Travel Agency</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/drivers">🚗 Drivers</a>
+      <a class="active" href="/drivers/new">➕ Add Driver</a>
+    </div>
+
+    <div class="right-controls">
+      <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="container">
+    <div class="card">
+      <h2>Add New Driver</h2>
+
+      <form action="/drivers/new" method="POST" style="margin-top:14px;">
+
+        <div class="form-grid">
+
+          <div class="form-row">
+            <label>Name</label>
+            <input type="text" name="name" required>
+          </div>
+
+          <div class="form-row">
+            <label>Phone</label>
+            <input type="text" name="phone">
+          </div>
+
+          <div class="form-row">
+            <label>Car</label>
+            <input type="text" name="car">
+          </div>
+
+          <div class="form-row">
+            <label>Car Number</label>
+            <input type="text" name="car_number">
+          </div>
+
+          <div class="form-row">
+            <label>License</label>
+            <input type="text" name="license">
+          </div>
+
+          <div class="form-row" style="grid-column:1 / -1;">
+            <label>Notes</label>
+            <textarea name="notes" style="height:80px;"></textarea>
+          </div>
+
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div style="margin-top:18px;">
+          <button class="btn" type="submit">Save Driver</button>
+          <a class="btn ghost" href="/drivers" style="margin-left:10px;">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="/main.js"></script>
+</body>
+</html>
