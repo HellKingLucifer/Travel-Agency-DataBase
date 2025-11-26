@@ -390,3 +390,21 @@ body.modal-open{ overflow:hidden; }
 .suggestion-item:hover{
   background:rgba(0,0,0,0.04);
 }
+
+.stats-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap:18px;
+}
+.stat-card {
+  background:var(--card);
+  border-radius:12px;
+  padding:16px;
+  text-align:center;
+  border:1px solid var(--border);
+}
+.stat-card h3 { font-size:14px; color:var(--muted); margin:0; }
+.stat-card p {
+  font-size:22px; font-weight:800;
+  margin:6px 0 0 0; color:var(--text);
+}

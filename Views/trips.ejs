@@ -17,7 +17,7 @@
     <div class="nav-links">
       <a href="/new-trip">➕ New Trip</a>
       <a class="active" href="/trips">📋 View Trips</a>
-       <a href="/drivers">🚗 Drivers</a>
+      <a href="/drivers">🚗 Drivers</a>
     </div>
 
     <div class="right-controls">
@@ -41,7 +41,7 @@
               type="text"
               name="search"
               placeholder="Search..."
-              value="<%= search %>"
+              value="<%= search || '' %>"
               style="min-width:300px;"
             >
           </div>
@@ -74,9 +74,8 @@
                 <td colspan="11" style="padding:20px; text-align:center;">No trips found.</td>
               </tr>
             <% } else { %>
-
               <% trips.forEach(trip => { %>
-                <tr class="trip-row">
+                <tr class="trip-row" data-includes-toll="<%= trip.includes_toll %>">
                   <!-- Clickable ID -->
                   <td class="col-id">
                     <a href="/trips/<%= trip.id %>" class="link-id"><strong><%= trip.id %></strong></a>
@@ -134,13 +133,16 @@
                       <img src="/icons/edit.svg"> <span class="btn-text">Edit</span>
                     </a>
 
-                    <button class="action-btn del-btn open-delete-modal" data-id="<%= trip.id %>">
+                    <button
+                      class="action-btn del-btn open-delete-modal"
+                      data-id="<%= trip.id %>"
+                      data-entity="trip"
+                    >
                       <img src="/icons/delete.svg"> <span class="btn-text">Delete</span>
                     </button>
                   </td>
                 </tr>
               <% }) %>
-
             <% } %>
           </tbody>
         </table>
@@ -148,16 +150,26 @@
 
       <!-- PAGINATION -->
       <div style="margin-top:20px; display:flex; gap:10px; align-items:center;">
-        <% if (currentPage > 1) { %>
-          <a class="btn ghost" href="/trips?page=<%= currentPage - 1 %>&search=<%= search %>">⬅ Prev</a>
+        <% if (typeof currentPage !== "undefined" && currentPage > 1) { %>
+          <a
+            class="btn ghost"
+            href="/trips?page=<%= currentPage - 1 %>&search=<%= encodeURIComponent(search || '') %>">
+            ⬅ Prev
+          </a>
         <% } %>
 
-        <span class="page-indicator">
-          Page <%= currentPage %> of <%= totalPages %>
-        </span>
+        <% if (typeof currentPage !== "undefined" && typeof totalPages !== "undefined") { %>
+          <span class="page-indicator">
+            Page <%= currentPage %> of <%= totalPages %>
+          </span>
+        <% } %>
 
-        <% if (currentPage < totalPages) { %>
-          <a class="btn ghost" href="/trips?page=<%= currentPage + 1 %>&search=<%= search %>">Next ➡</a>
+        <% if (typeof currentPage !== "undefined" && currentPage < totalPages) { %>
+          <a
+            class="btn ghost"
+            href="/trips?page=<%= currentPage + 1 %>&search=<%= encodeURIComponent(search || '') %>">
+            Next ➡
+          </a>
         <% } %>
       </div>
 

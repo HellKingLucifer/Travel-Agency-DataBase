@@ -1,9 +1,6 @@
 // main.js - client UI utilities
 document.addEventListener("DOMContentLoaded", () => {
-
-  /* ===========================
-        DARK MODE
-  =========================== */
+  // ========== DARK MODE ==========
   const body = document.body;
   const saved = localStorage.getItem("dms_dark");
   if (saved === "1") body.classList.add("dark");
@@ -12,16 +9,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (darkToggle) {
     darkToggle.addEventListener("click", () => {
       body.classList.toggle("dark");
-      localStorage.setItem(
-        "dms_dark",
-        body.classList.contains("dark") ? "1" : "0"
-      );
+      localStorage.setItem("dms_dark", body.classList.contains("dark") ? "1" : "0");
     });
   }
 
-  /* ===========================
-        CLIENT TABLE SEARCH
-  =========================== */
+  // ========== CLIENT TABLE SEARCH (optional extra) ==========
   const searchInput = document.getElementById("table-search");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -34,9 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ===========================
-        FILTER TOLL INCLUDED
-  =========================== */
+  // ========== FILTER TOLL INCLUDED ==========
   const tollFilter = document.getElementById("filter-toll");
   if (tollFilter) {
     tollFilter.addEventListener("change", () => {
@@ -52,9 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-/* ===========================
-      DELETE CONFIRMATION MODAL
-=========================== */
+// ==========================
+// DELETE CONFIRMATION MODAL
+// ==========================
 const modal = document.getElementById("deleteModal");
 const cancelBtn = document.getElementById("cancelDelete");
 const confirmForm = document.getElementById("confirmDeleteForm");
@@ -63,7 +53,15 @@ if (modal && confirmForm) {
   document.querySelectorAll(".open-delete-modal").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-id");
-      confirmForm.action = `/trips/${id}/delete`;
+      const entity = btn.getAttribute("data-entity") || "trip";
+
+      // Choose route based on entity
+      if (entity === "driver") {
+        confirmForm.action = `/drivers/${id}/delete`;
+      } else {
+        confirmForm.action = `/trips/${id}/delete`;
+      }
+
       modal.style.display = "flex";
       document.body.classList.add("modal-open");
     });
@@ -76,7 +74,6 @@ if (modal && confirmForm) {
     });
   }
 
-  // Close modal with ESC
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modal.style.display === "flex") {
       modal.style.display = "none";
@@ -85,9 +82,9 @@ if (modal && confirmForm) {
   });
 }
 
-/* ===========================
-      DRIVER AUTOCOMPLETE
-=========================== */
+// ==========================
+// DRIVER AUTOCOMPLETE
+// ==========================
 (function () {
   const driverInput = document.getElementById("driver-search");
   const suggestionsBox = document.getElementById("driver-suggestions");
@@ -109,7 +106,6 @@ if (modal && confirmForm) {
     driverInput.readOnly = false;
   }
 
-  // Typing handler
   driverInput.addEventListener("input", (e) => {
     const q = e.target.value.trim();
     unlockDriverInput();
@@ -134,9 +130,9 @@ if (modal && confirmForm) {
 
             div.addEventListener("click", () => {
               driverInput.value = d.name;
-              carInput.value = d.car || "";
-              phoneInput.value = d.phone || "";
-              carNoInput.value = d.car_number || "";
+              if (carInput) carInput.value = d.car || "";
+              if (phoneInput) phoneInput.value = d.phone || "";
+              if (carNoInput) carNoInput.value = d.car_number || "";
 
               driverInput.readOnly = true;
               clearSuggestions();

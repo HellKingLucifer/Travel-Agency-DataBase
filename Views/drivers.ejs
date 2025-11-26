@@ -35,16 +35,15 @@
         <h2>Drivers</h2>
 
         <div class="controls" style="display:flex; gap:12px;">
-          
           <!-- SEARCH BAR -->
           <form action="/drivers" method="GET" style="display:flex; gap:10px; align-items:center;">
             <div style="display:flex; align-items:center; gap:8px;">
               <img src="/icons/search.svg" class="inline-icon" style="width:16px;">
-              <input 
-                type="text" 
-                name="search" 
-                placeholder="Search drivers..." 
-                value="<%= search %>"
+              <input
+                type="text"
+                name="search"
+                placeholder="Search drivers..."
+                value="<%= search || '' %>"
                 style="min-width:250px;"
               >
             </div>
@@ -56,7 +55,6 @@
             <img src="/icons/add.svg" style="width:16px;">
             Add Driver
           </a>
-
         </div>
       </div>
 
@@ -81,9 +79,7 @@
                   No drivers found.
                 </td>
               </tr>
-
             <% } else { %>
-
               <% drivers.forEach(d => { %>
                 <tr>
                   <td><strong><%= d.id %></strong></td>
@@ -98,19 +94,18 @@
                       <img src="/icons/edit.svg" class="inline-icon"> Edit
                     </a>
 
-                    <!-- DELETE -->
-                    <button 
-                      class="action-btn del-btn open-delete-modal" 
+                    <!-- DELETE (uses modal) -->
+                    <button
+                      class="action-btn del-btn open-delete-modal"
                       data-id="<%= d.id %>"
+                      data-entity="driver"
                     >
                       <img src="/icons/delete.svg" class="inline-icon"> Delete
                     </button>
                   </td>
                 </tr>
               <% }) %>
-
             <% } %>
-
           </tbody>
         </table>
       </div>

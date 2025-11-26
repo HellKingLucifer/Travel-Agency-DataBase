@@ -36,7 +36,6 @@
         <!-- CUSTOMER -->
         <h3 style="margin-top:10px;">Customer Details</h3>
         <div class="form-grid">
-
           <div class="form-row">
             <label>Customer Name</label>
             <input type="text" name="customer_name" value="<%= trip.customer_name %>" required>
@@ -51,13 +50,11 @@
             <label>Customer ID</label>
             <input type="text" name="customer_id" value="<%= trip.customer_id %>">
           </div>
-
         </div>
 
         <!-- DEPARTURE -->
         <h3 style="margin-top:20px;">Departure Details</h3>
         <div class="form-grid">
-
           <div class="form-row">
             <label>Departure Place</label>
             <input type="text" name="departure_place" value="<%= trip.departure_place %>" required>
@@ -72,13 +69,11 @@
             <label>Departure Time</label>
             <input type="time" name="departure_time" value="<%= trip.departure_time %>" required>
           </div>
-
         </div>
 
         <!-- ARRIVAL -->
         <h3 style="margin-top:20px;">Arrival Details</h3>
         <div class="form-grid">
-
           <div class="form-row">
             <label>Arrival Place</label>
             <input type="text" name="arrival_place" value="<%= trip.arrival_place %>" required>
@@ -93,26 +88,20 @@
             <label>Arrival Time</label>
             <input type="time" name="arrival_time" value="<%= trip.arrival_time %>" required>
           </div>
-
         </div>
 
         <!-- ASSIGNMENT -->
         <h3 style="margin-top:20px;">Assignment</h3>
         <div class="form-grid">
-
           <div class="form-row" style="position:relative;">
             <label>Assigned Driver</label>
-
-            <!-- Autocomplete field identical to new-trip -->
             <input
               id="driver-search"
               type="text"
               name="assigned_driver"
               autocomplete="off"
               placeholder="Type driver name..."
-              value="<%= trip.assigned_driver %>"
-            >
-
+              value="<%= trip.assigned_driver %>">
             <div id="driver-suggestions" class="suggestions" style="display:none;"></div>
           </div>
 
@@ -123,20 +112,18 @@
 
           <div class="form-row">
             <label>Driver Phone</label>
-            <input id="driver_phone" type="text" name="driver_phone" value="<%= trip.driver_phone %>" readonly>
+            <input id="driver_phone" type="text" name="driver_phone" value="<%= trip.driver_phone %>">
           </div>
 
           <div class="form-row">
             <label>Car Number</label>
-            <input id="car_number" type="text" name="car_number" value="<%= trip.car_number %>" readonly>
+            <input id="car_number" type="text" name="car_number" value="<%= trip.car_number %>">
           </div>
-
         </div>
 
         <!-- FEE -->
         <h3 style="margin-top:20px;">Fee & Toll</h3>
         <div class="form-grid">
-
           <div class="form-row">
             <label>Travelling Fee</label>
             <input type="number" step="0.01" name="travelling_fee" value="<%= trip.travelling_fee %>" required>
@@ -149,7 +136,6 @@
               <option value="exclude" <%= !trip.includes_toll ? "selected" : "" %>>Excluding Toll</option>
             </select>
           </div>
-
         </div>
 
         <!-- BUTTONS -->

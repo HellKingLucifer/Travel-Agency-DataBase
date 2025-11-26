@@ -4,6 +4,167 @@
   <meta charset="utf-8" />
   <title>Dashboard - Travel Agency</title>
   <link rel="stylesheet" href="/styles.css">
+
+  <style>
+    /* Layout for charts */
+    .charts-row {
+      display: flex;
+      gap: 24px;
+      margin-top: 26px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .chart-card {
+      flex: 1 1 420px;
+      max-width: 520px;
+      background: var(--card);
+      padding: 18px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      text-align: center;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      opacity: 0;
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .chart-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      border-color: rgba(107, 70, 255, 0.35);
+    }
+
+    .chart-card canvas {
+      width: 100% !important;
+      height: 320px !important;
+    }
+
+    /* Stat cards animations */
+    .dashboard-card {
+      border-radius: 16px;
+      opacity: 0;
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .dashboard-card:nth-child(1) { animation-delay: 0.0s; }
+    .dashboard-card:nth-child(2) { animation-delay: 0.1s; }
+    .dashboard-card:nth-child(3) { animation-delay: 0.2s; }
+
+    .stat-card {
+      border-radius: 14px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px rgba(15,23,42,0.18);
+      border-color: rgba(107,70,255,0.35);
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--text);
+      transition: transform 0.25s ease;
+    }
+
+    .stat-card:hover .stat-value {
+      transform: scale(1.06);
+    }
+
+    /* Timeline */
+    .timeline-card {
+      margin-top: 26px;
+      border-radius: 16px;
+      opacity: 0;
+      animation: fadeInUp 0.6s ease forwards;
+      animation-delay: 0.25s;
+    }
+
+    .timeline-list {
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .timeline-item {
+      display: flex;
+      flex-direction: column;
+      padding: 10px 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .timeline-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timeline-title {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .timeline-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .timeline-badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+    }
+
+    .badge-future {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: rgba(3,105,161,0.3);
+    }
+
+    /* Theme picker */
+    .theme-picker {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .theme-picker select {
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    /* Fade in animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .chart-card canvas {
+        height: 260px !important;
+      }
+    }
+  </style>
+
 </head>
 
 <body>
@@ -22,46 +183,117 @@
     </div>
 
     <div class="right-controls">
+      <div class="theme-picker">
+        Theme:
+        <select id="theme-picker-select">
+          <option value="purple">Purple</option>
+          <option value="blue">Blue</option>
+          <option value="emerald">Emerald</option>
+        </select>
+      </div>
       <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
     </div>
   </div>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN -->
   <div class="container">
 
-    <!-- Stats Card -->
-    <div class="card">
+    <!-- Stats -->
+    <div class="card dashboard-card">
       <h1>Dashboard</h1>
 
       <div class="stats" style="margin-top:18px;">
         <div class="stat-card">
           <h3>Total Trips</h3>
-          <p><%= stats.total %></p>
+          <p class="stat-value" data-value="<%= stats.totalTrips %>">0</p>
         </div>
 
         <div class="stat-card">
-          <h3>Today's Departures (<%= today %>)</h3>
-          <p><%= stats.today %></p>
+          <h3>Today's Trips (<%= today %>)</h3>
+          <p class="stat-value" data-value="<%= stats.todayTrips %>">0</p>
         </div>
 
         <div class="stat-card">
           <h3>Total Revenue</h3>
-          <p>₹<%= Number(stats.revenue || 0).toFixed(2) %></p>
+          <p class="stat-value" data-value="<%= stats.revenue %>">0</p>
+        </div>
+
+        <div class="stat-card">
+          <h3>Total Drivers</h3>
+          <p class="stat-value" data-value="<%= stats.totalDrivers %>">0</p>
         </div>
       </div>
-
     </div>
 
-    <!-- DRIVER PIE CHART CARD -->
-    <div class="card" style="margin-top:28px;">
-      <h2>Driver Status Overview</h2>
-
-      <p class="muted small" style="margin-bottom:12px;">
-        Total Drivers: <strong><%= stats.totalDrivers %></strong>
-      </p>
-
-      <div style="width:100%; max-width:420px; height:300px; margin-top:20px;">
+    <!-- Charts Row 1: Driver status + Trips/month -->
+    <div class="charts-row">
+      <!-- Driver Status -->
+      <div class="chart-card">
+        <h3>Driver Status</h3>
+        <p class="muted small">
+          Busy: <strong><%= stats.busyDrivers %></strong> ·
+          Idle: <strong><%= stats.idleDrivers %></strong> ·
+          Upcoming: <strong><%= stats.upcomingDrivers %></strong>
+        </p>
         <canvas id="driverPieChart"></canvas>
+      </div>
+
+      <!-- Trips Per Month -->
+      <div class="chart-card">
+        <h3>Trips Per Month</h3>
+        <canvas id="monthlyTripsBarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Charts Row 2: Revenue doughnut + revenue/month -->
+    <div class="charts-row" style="margin-top:22px;">
+      <!-- Revenue Doughnut -->
+      <div class="chart-card">
+        <h3>Revenue Share (By Month)</h3>
+        <canvas id="revenueDoughnutChart"></canvas>
+      </div>
+
+      <!-- Revenue Per Month -->
+      <div class="chart-card">
+        <h3>Monthly Revenue</h3>
+        <canvas id="monthlyRevenueBarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Trip Timeline -->
+    <div class="card timeline-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>Upcoming Trips</h2>
+        <span class="muted small">Next <strong>6</strong> trips</span>
+      </div>
+
+      <div class="timeline-list">
+        <% if (!timelineTrips || timelineTrips.length === 0) { %>
+          <div class="timeline-item">
+            <div class="timeline-main">
+              <span class="timeline-title">No upcoming trips scheduled.</span>
+            </div>
+          </div>
+        <% } else { %>
+          <% timelineTrips.forEach(t => { %>
+            <div class="timeline-item">
+              <div class="timeline-main">
+                <div>
+                  <div class="timeline-title">
+                    <%= t.departure_date %> · <%= t.departure_time %> — <%= t.customer_name %>
+                  </div>
+                  <div class="timeline-sub">
+                    <strong><%= t.departure_place %></strong> → <strong><%= t.arrival_place %></strong>
+                    <% if (t.assigned_driver) { %>
+                      · Driver: <%= t.assigned_driver %>
+                    <% } %>
+                  </div>
+                </div>
+                <span class="timeline-badge badge-future">UPCOMING</span>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
       </div>
     </div>
 
@@ -70,29 +302,180 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- PIE CHART SCRIPT -->
   <script>
-    const freeDrivers = Number("<%= stats.freeDrivers %>");
-    const busyDrivers = Number("<%= stats.busyDrivers %>");
-
-    const ctx = document.getElementById('driverPieChart');
-
-    new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: ['Available Drivers', 'Drivers on Trip'],
-        datasets: [{
-          data: [freeDrivers, busyDrivers],
-          backgroundColor: ['#34d399', '#f87171'],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,   // IMPORTANT FIX
-        plugins: { legend: { position: 'bottom' } }
+    // ---------- Theme Color Picker ----------
+    (function() {
+      const select = document.getElementById('theme-picker-select');
+      const root = document.documentElement;
+      const saved = localStorage.getItem('ta_theme');
+      if (saved) {
+        select.value = saved;
+        applyTheme(saved);
       }
+
+      select.addEventListener('change', () => {
+        const v = select.value;
+        applyTheme(v);
+        localStorage.setItem('ta_theme', v);
+      });
+
+      function applyTheme(name) {
+        if (name === 'blue') {
+          root.style.setProperty('--accent',  '#2563eb');
+          root.style.setProperty('--accent-2','#38bdf8');
+        } else if (name === 'emerald') {
+          root.style.setProperty('--accent',  '#059669');
+          root.style.setProperty('--accent-2','#22c55e');
+        } else {
+          // purple default
+          root.style.setProperty('--accent',  '#6b46ff');
+          root.style.setProperty('--accent-2','#0076ff');
+        }
+      }
+    })();
+
+    // ---------- Stat Number Animation ----------
+    document.querySelectorAll(".stat-value").forEach(el => {
+      const target = Number(el.dataset.value) || 0;
+      let current = 0;
+      const steps = 40;
+      const increment = target / steps;
+
+      const animate = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          current = target;
+          clearInterval(animate);
+        }
+        el.textContent = Math.round(current).toLocaleString();
+      }, 20);
     });
+
+    // ---------- Driver Status PIE ----------
+    const busyDrivers     = Number("<%= stats.busyDrivers %>");
+    const idleDrivers     = Number("<%= stats.idleDrivers %>");
+    const upcomingDrivers = Number("<%= stats.upcomingDrivers %>");
+
+    const driverPieCtx = document.getElementById("driverPieChart");
+    if (driverPieCtx) {
+      new Chart(driverPieCtx, {
+        type: "pie",
+        data: {
+          labels: ["Busy", "Idle", "Upcoming"],
+          datasets: [{
+            data: [busyDrivers, idleDrivers, upcomingDrivers],
+            backgroundColor: ["#fb3c3c", "#28c76f", "#ffcc00"],
+            hoverOffset: 10
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const total = busyDrivers + idleDrivers + upcomingDrivers || 1;
+                  const count = ctx.raw;
+                  const percent = ((count / total) * 100).toFixed(1);
+                  return `${ctx.label}: ${count} (${percent}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ---------- Trips per Month BAR ----------
+    const tripsLabels = <%- JSON.stringify(stats.monthlyLabels) %>;
+    const tripsData   = <%- JSON.stringify(stats.monthlyTotals) %>;
+
+    const tripsCtx = document.getElementById("monthlyTripsBarChart");
+    if (tripsCtx) {
+      new Chart(tripsCtx, {
+        type: "bar",
+        data: {
+          labels: tripsLabels,
+          datasets: [{
+            label: "Trips",
+            data: tripsData,
+            backgroundColor: "#6b46ff"
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          },
+          animation: {
+            duration: 1000,
+            easing: "easeOutCubic"
+          }
+        }
+      });
+    }
+
+    // ---------- Monthly Revenue BAR + DOUGHNUT ----------
+    const revLabels = <%- JSON.stringify(stats.monthlyRevenueLabels) %>;
+    const revData   = <%- JSON.stringify(stats.monthlyRevenueTotals) %>;
+
+    const palette = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#f97316", "#ec4899"];
+
+    const revBarCtx = document.getElementById("monthlyRevenueBarChart");
+    if (revBarCtx) {
+      new Chart(revBarCtx, {
+        type: "bar",
+        data: {
+          labels: revLabels,
+          datasets: [{
+            label: "Revenue",
+            data: revData,
+            backgroundColor: revLabels.map((_, i) => palette[i % palette.length])
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } },
+          animation: {
+            duration: 1100,
+            easing: "easeOutCubic"
+          }
+        }
+      });
+    }
+
+    const revDoughnutCtx = document.getElementById("revenueDoughnutChart");
+    if (revDoughnutCtx) {
+      new Chart(revDoughnutCtx, {
+        type: "doughnut",
+        data: {
+          labels: revLabels,
+          datasets: [{
+            data: revData,
+            backgroundColor: revLabels.map((_, i) => palette[i % palette.length]),
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const total = revData.reduce((a, b) => a + b, 0) || 1;
+                  const val = ctx.raw;
+                  const percent = ((val / total) * 100).toFixed(1);
+                  return `${ctx.label}: ₹${val.toFixed(2)} (${percent}%)`;
+                }
+              }
+            }
+          },
+          cutout: "55%"
+        }
+      });
+    }
   </script>
 
   <script src="/main.js"></script>
