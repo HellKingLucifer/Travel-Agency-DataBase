@@ -6,7 +6,114 @@
   <link rel="stylesheet" href="/styles.css">
 
   <style>
-    /* Layout for charts */
+    :root {
+      --accent: #6b46ff;
+      --accent-2: #0076ff;
+    }
+
+    body {
+      background: radial-gradient(circle at top, rgba(129, 140, 248, 0.32), transparent 55%),
+                  radial-gradient(circle at bottom, rgba(56, 189, 248, 0.16), transparent 55%);
+    }
+
+    .card.dashboard-card {
+      background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.10), rgba(15, 23, 42, 0.8));
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      box-shadow: 0 22px 45px rgba(15, 23, 42, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card.dashboard-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(14, 165, 233, 0.18));
+      opacity: 0.35;
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+
+    .card.dashboard-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .stat-card {
+      padding: 14px 14px 12px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.66);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-card h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      color: #9ca3af;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+
+    .stat-card-click {
+      cursor: pointer;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.7);
+      border-color: rgba(129, 140, 248, 0.9);
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.85), rgba(17, 24, 39, 0.95));
+    }
+
+    .stat-card:hover .stat-pill {
+      border-color: rgba(245, 245, 255, 0.85);
+      color: #e5e7eb;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 900;
+      color: #e5e7eb;
+      margin: 0;
+      transition: transform 0.25s ease;
+    }
+
+    .stat-card:hover .stat-value {
+      transform: scale(1.06);
+    }
+
+    .stat-subtext {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
     .charts-row {
       display: flex;
       gap: 24px;
@@ -18,21 +125,35 @@
     .chart-card {
       flex: 1 1 420px;
       max-width: 520px;
-      background: var(--card);
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.28), rgba(15, 23, 42, 0.96));
       padding: 18px;
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.82);
+      border: 1px solid rgba(148, 163, 184, 0.55);
       text-align: center;
       transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-      opacity: 0;
-      animation: fadeInUp 0.5s ease forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at top, rgba(251, 191, 36, 0.11), transparent 60%);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .chart-card > * {
+      position: relative;
+      z-index: 1;
     }
 
     .chart-card:hover {
-      transform: translateY(-4px) scale(1.02);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-      border-color: rgba(107, 70, 255, 0.35);
+      transform: translateY(-3px);
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.9);
+      border-color: rgba(56, 189, 248, 0.85);
     }
 
     .chart-card canvas {
@@ -40,61 +161,25 @@
       height: 320px !important;
     }
 
-    /* Stat cards animations */
-    .dashboard-card {
-      border-radius: 16px;
-      opacity: 0;
-      animation: fadeInUp 0.5s ease forwards;
-    }
-
-    .dashboard-card:nth-child(1) { animation-delay: 0.0s; }
-    .dashboard-card:nth-child(2) { animation-delay: 0.1s; }
-    .dashboard-card:nth-child(3) { animation-delay: 0.2s; }
-
-    .stat-card {
-      border-radius: 14px;
-      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-      box-shadow: 0 6px 18px rgba(15,23,42,0.06);
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
-    }
-
-    .stat-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 14px 30px rgba(15,23,42,0.18);
-      border-color: rgba(107,70,255,0.35);
-    }
-
-    .stat-value {
-      font-size: 32px;
-      font-weight: 900;
-      color: var(--text);
-      transition: transform 0.25s ease;
-    }
-
-    .stat-card:hover .stat-value {
-      transform: scale(1.06);
-    }
-
-    /* Timeline */
     .timeline-card {
       margin-top: 26px;
-      border-radius: 16px;
-      opacity: 0;
-      animation: fadeInUp 0.6s ease forwards;
-      animation-delay: 0.25s;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
     }
 
     .timeline-list {
       margin-top: 12px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid rgba(55, 65, 81, 0.9);
     }
 
     .timeline-item {
       display: flex;
       flex-direction: column;
       padding: 10px 4px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(55, 65, 81, 0.8);
     }
 
     .timeline-main {
@@ -106,12 +191,13 @@
 
     .timeline-title {
       font-weight: 600;
-      color: var(--text);
+      color: #e5e7eb;
+      font-size: 14px;
     }
 
     .timeline-sub {
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 12px;
+      color: #9ca3af;
     }
 
     .timeline-badge {
@@ -119,16 +205,11 @@
       border-radius: 999px;
       font-size: 11px;
       font-weight: 700;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(37, 99, 235, 0.2);
+      color: #bfdbfe;
     }
 
-    .badge-future {
-      background: #e0f2fe;
-      color: #0369a1;
-      border-color: rgba(3,105,161,0.3);
-    }
-
-    /* Theme picker */
     .theme-picker {
       margin-left: auto;
       display: inline-flex;
@@ -137,34 +218,162 @@
       font-size: 13px;
       color: var(--muted);
     }
+
     .theme-picker select {
       padding: 6px 8px;
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
       font-size: 13px;
     }
 
-    /* Fade in animation */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    /* Trip Modal (Today's / Ongoing / Upcoming) */
+    .trip-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.90));
+      backdrop-filter: blur(20px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      padding: 16px;
+    }
+
+    .trip-modal-box {
+      width: 100%;
+      max-width: 780px;
+      max-height: 80vh;
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.45), rgba(15, 23, 42, 0.96));
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.92);
+      padding: 18px 20px 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .trip-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .trip-modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e5e7eb;
+      margin: 0;
+    }
+
+    .trip-modal-subtitle {
+      font-size: 13px;
+      color: #9ca3af;
+      margin: 2px 0 0;
+    }
+
+    .trip-modal-close {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: #e5e7eb;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      transition: background 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .trip-modal-close:hover {
+      background: rgba(239, 68, 68, 0.85);
+      border-color: rgba(252, 165, 165, 0.9);
+      box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.8);
+      transform: scale(1.02);
+    }
+
+    .trip-modal-body {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(55, 65, 81, 0.85);
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .trip-modal-item {
+      padding: 10px 4px;
+      border-bottom: 1px solid rgba(55, 65, 81, 0.8);
+      display: flex;
+      gap: 10px;
+    }
+
+    .trip-modal-item:last-child {
+      border-bottom: none;
+    }
+
+    .trip-chip {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: #e5e7eb;
+      margin-right: 6px;
+      white-space: nowrap;
+    }
+
+    .trip-chip.trip-chip-time {
+      background: rgba(59, 130, 246, 0.22);
+      border-color: rgba(59, 130, 246, 0.75);
+    }
+
+    .trip-chip.trip-chip-driver {
+      background: rgba(34, 197, 94, 0.14);
+      border-color: rgba(34, 197, 94, 0.7);
+    }
+
+    .trip-chip.trip-chip-customer {
+      background: rgba(234, 179, 8, 0.14);
+      border-color: rgba(234, 179, 8, 0.7);
+    }
+
+    .trip-chip.trip-chip-car {
+      background: rgba(236, 72, 153, 0.14);
+      border-color: rgba(236, 72, 153, 0.7);
+    }
+
+    .trip-modal-mainline {
+      font-size: 13px;
+      color: #e5e7eb;
+      margin-bottom: 4px;
+    }
+
+    .trip-modal-subline {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .trip-modal-empty {
+      padding: 12px 4px;
+      font-size: 13px;
+      color: #9ca3af;
     }
 
     @media (max-width: 900px) {
       .chart-card canvas {
         height: 260px !important;
       }
+      .trip-modal-box {
+        padding: 14px;
+      }
     }
   </style>
-
 </head>
 
 <body>
@@ -202,32 +411,60 @@
     <div class="card dashboard-card">
       <h1>Dashboard</h1>
 
-      <div class="stats" style="margin-top:18px;">
-        <div class="stat-card">
-          <h3>Total Trips</h3>
-          <p class="stat-value" data-value="<%= stats.totalTrips %>">0</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Today's Trips (<%= today %>)</h3>
+      <div class="stats-grid">
+        <!-- Today’s Trips (click → modal) -->
+        <button type="button" class="stat-card stat-card-click" data-trip-kind="today">
+          <h3>Today's Trips</h3>
           <p class="stat-value" data-value="<%= stats.todayTrips %>">0</p>
-        </div>
+          <span class="stat-pill">Click to view trips</span>
+          <span class="stat-subtext">Trips departing on <strong><%= today %></strong></span>
+        </button>
 
+        <!-- Ongoing Trips (click → modal) -->
+        <button type="button" class="stat-card stat-card-click" data-trip-kind="ongoing">
+          <h3>Ongoing Trips</h3>
+          <p class="stat-value" data-value="<%= (ongoingTrips || []).length %>">0</p>
+          <span class="stat-pill">Click to see running</span>
+          <span class="stat-subtext">Currently between departure & arrival</span>
+        </button>
+
+        <!-- Upcoming Trips (click → modal) -->
+        <button type="button" class="stat-card stat-card-click" data-trip-kind="upcoming">
+          <h3>Upcoming Trips</h3>
+          <p class="stat-value" data-value="<%= (upcomingTrips || []).length %>">0</p>
+          <span class="stat-pill">Click to preview next</span>
+          <span class="stat-subtext">Trips starting after <strong><%= today %></strong></span>
+        </button>
+
+        <!-- Total Trips -->
         <div class="stat-card">
-          <h3>Total Revenue</h3>
-          <p class="stat-value" data-value="<%= stats.revenue %>">0</p>
+          <h3>Total Trips (All Time)</h3>
+          <p class="stat-value" data-value="<%= stats.totalTrips %>">0</p>
+          <span class="stat-subtext">All trips stored in the system</span>
         </div>
 
+        <!-- Total Drivers -->
         <div class="stat-card">
           <h3>Total Drivers</h3>
           <p class="stat-value" data-value="<%= stats.totalDrivers %>">0</p>
+          <span class="stat-subtext">
+            Busy: <strong><%= stats.busyDrivers %></strong> ·
+            Idle: <strong><%= stats.idleDrivers %></strong> ·
+            Upcoming: <strong><%= stats.upcomingDrivers %></strong>
+          </span>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="stat-card">
+          <h3>Total Revenue (₹)</h3>
+          <p class="stat-value" data-value="<%= Math.round(stats.revenue || 0) %>">0</p>
+          <span class="stat-subtext">Rounded from ₹<%= Number(stats.revenue || 0).toFixed(2) %></span>
         </div>
       </div>
     </div>
 
-    <!-- Charts Row 1: Driver status + Trips/month -->
+    <!-- Charts Row 1: Driver status + Trips per month -->
     <div class="charts-row">
-      <!-- Driver Status -->
       <div class="chart-card">
         <h3>Driver Status</h3>
         <p class="muted small">
@@ -238,22 +475,19 @@
         <canvas id="driverPieChart"></canvas>
       </div>
 
-      <!-- Trips Per Month -->
       <div class="chart-card">
         <h3>Trips Per Month</h3>
         <canvas id="monthlyTripsBarChart"></canvas>
       </div>
     </div>
 
-    <!-- Charts Row 2: Revenue doughnut + revenue/month -->
+    <!-- Charts Row 2: Revenue doughnut + Revenue bar -->
     <div class="charts-row" style="margin-top:22px;">
-      <!-- Revenue Doughnut -->
       <div class="chart-card">
         <h3>Revenue Share (By Month)</h3>
         <canvas id="revenueDoughnutChart"></canvas>
       </div>
 
-      <!-- Revenue Per Month -->
       <div class="chart-card">
         <h3>Monthly Revenue</h3>
         <canvas id="monthlyRevenueBarChart"></canvas>
@@ -289,7 +523,7 @@
                     <% } %>
                   </div>
                 </div>
-                <span class="timeline-badge badge-future">UPCOMING</span>
+                <span class="timeline-badge">UPCOMING</span>
               </div>
             </div>
           <% }) %>
@@ -297,6 +531,22 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Trip Modal (shared for Today / Ongoing / Upcoming) -->
+  <div id="tripModalOverlay" class="trip-modal-overlay">
+    <div class="trip-modal-box">
+      <div class="trip-modal-header">
+        <div>
+          <h2 id="tripModalTitle" class="trip-modal-title">Trips</h2>
+          <p id="tripModalSubtitle" class="trip-modal-subtitle"></p>
+        </div>
+        <button id="tripModalClose" type="button" class="trip-modal-close">&times;</button>
+      </div>
+      <div id="tripModalBody" class="trip-modal-body">
+        <!-- Filled by JS -->
+      </div>
+    </div>
   </div>
 
   <!-- Chart.js -->
@@ -327,7 +577,6 @@
           root.style.setProperty('--accent',  '#059669');
           root.style.setProperty('--accent-2','#22c55e');
         } else {
-          // purple default
           root.style.setProperty('--accent',  '#6b46ff');
           root.style.setProperty('--accent-2','#0076ff');
         }
@@ -339,7 +588,7 @@
       const target = Number(el.dataset.value) || 0;
       let current = 0;
       const steps = 40;
-      const increment = target / steps;
+      const increment = target / steps || 0;
 
       const animate = setInterval(() => {
         current += increment;
@@ -364,8 +613,9 @@
           labels: ["Busy", "Idle", "Upcoming"],
           datasets: [{
             data: [busyDrivers, idleDrivers, upcomingDrivers],
-            backgroundColor: ["#fb3c3c", "#28c76f", "#ffcc00"],
-            hoverOffset: 10
+            backgroundColor: ["#fb3c3c", "#22c55e", "#eab308"],
+            hoverOffset: 8,
+            borderWidth: 1
           }]
         },
         options: {
@@ -387,8 +637,8 @@
     }
 
     // ---------- Trips per Month BAR ----------
-    const tripsLabels = <%- JSON.stringify(stats.monthlyLabels) %>;
-    const tripsData   = <%- JSON.stringify(stats.monthlyTotals) %>;
+    const tripsLabels = <%- JSON.stringify(stats.monthlyLabels || []) %>;
+    const tripsData   = <%- JSON.stringify(stats.monthlyTotals || []) %>;
 
     const tripsCtx = document.getElementById("monthlyTripsBarChart");
     if (tripsCtx) {
@@ -403,25 +653,17 @@
           }]
         },
         options: {
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: { beginAtZero: true }
-          },
-          animation: {
-            duration: 1000,
-            easing: "easeOutCubic"
-          }
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } },
+          animation: { duration: 1000, easing: "easeOutCubic" }
         }
       });
     }
 
     // ---------- Monthly Revenue BAR + DOUGHNUT ----------
-    const revLabels = <%- JSON.stringify(stats.monthlyRevenueLabels) %>;
-    const revData   = <%- JSON.stringify(stats.monthlyRevenueTotals) %>;
-
-    const palette = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#f97316", "#ec4899"];
+    const revLabels = <%- JSON.stringify(stats.monthlyRevenueLabels || []) %>;
+    const revData   = <%- JSON.stringify(stats.monthlyRevenueTotals || []) %>;
+    const palette   = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#f97316", "#ec4899"];
 
     const revBarCtx = document.getElementById("monthlyRevenueBarChart");
     if (revBarCtx) {
@@ -438,10 +680,7 @@
         options: {
           plugins: { legend: { display: false } },
           scales: { y: { beginAtZero: true } },
-          animation: {
-            duration: 1100,
-            easing: "easeOutCubic"
-          }
+          animation: { duration: 1100, easing: "easeOutCubic" }
         }
       });
     }
@@ -455,7 +694,8 @@
           datasets: [{
             data: revData,
             backgroundColor: revLabels.map((_, i) => palette[i % palette.length]),
-            hoverOffset: 8
+            hoverOffset: 8,
+            borderWidth: 1
           }]
         },
         options: {
@@ -467,7 +707,8 @@
                   const total = revData.reduce((a, b) => a + b, 0) || 1;
                   const val = ctx.raw;
                   const percent = ((val / total) * 100).toFixed(1);
-                  return `${ctx.label}: ₹${val.toFixed(2)} (${percent}%)`;
+                  const num = typeof val === "number" ? val : Number(val || 0);
+                  return `${ctx.label}: ₹${num.toFixed(2)} (${percent}%)`;
                 }
               }
             }
@@ -476,6 +717,124 @@
         }
       });
     }
+
+    // ---------- Trip Modals (Today / Ongoing / Upcoming) ----------
+    const todayTripsData    = <%- JSON.stringify(todayTrips || []) %>;
+    const ongoingTripsData  = <%- JSON.stringify(ongoingTrips || []) %>;
+    const upcomingTripsData = <%- JSON.stringify(upcomingTrips || []) %>;
+
+    (function() {
+      const overlay   = document.getElementById("tripModalOverlay");
+      const titleEl   = document.getElementById("tripModalTitle");
+      const subtitleEl= document.getElementById("tripModalSubtitle");
+      const bodyEl    = document.getElementById("tripModalBody");
+      const closeBtn  = document.getElementById("tripModalClose");
+
+      if (!overlay || !titleEl || !subtitleEl || !bodyEl || !closeBtn) return;
+
+      function renderTrips(list) {
+        bodyEl.innerHTML = "";
+        if (!list || list.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "trip-modal-empty";
+          empty.textContent = "No trips in this category.";
+          bodyEl.appendChild(empty);
+          return;
+        }
+
+        list.forEach((t) => {
+          const item = document.createElement("div");
+          item.className = "trip-modal-item";
+
+          const id = t.id ?? "";
+          const customerName = t.customer_name || "-";
+          const customerPhone = t.phone_number || "-";
+          const driverName = t.assigned_driver || "-";
+          const driverPhone = t.driver_phone || "-";
+          const car = t.assigned_car || "-";
+          const carNo = t.car_number || "-";
+          const depTime = t.departure_time || "-";
+          const depPlace = t.departure_place || "-";
+          const arrTime = t.arrival_time || "-";
+          const arrPlace = t.arrival_place || "-";
+
+          item.innerHTML = `
+            <div style="flex:1;">
+              <div class="trip-modal-mainline">
+                <span class="trip-chip trip-chip-time">
+                  Trip #${id} · ${depTime} → ${arrTime}
+                </span>
+              </div>
+              <div class="trip-modal-subline" style="margin-bottom:4px;">
+                <span class="trip-chip trip-chip-customer">Customer</span>
+                ${customerName} · ${customerPhone}
+              </div>
+              <div class="trip-modal-subline" style="margin-bottom:4px;">
+                <span class="trip-chip trip-chip-driver">Driver</span>
+                ${driverName} · ${driverPhone}
+              </div>
+              <div class="trip-modal-subline" style="margin-bottom:4px;">
+                <span class="trip-chip trip-chip-car">Car</span>
+                ${car} · ${carNo}
+              </div>
+              <div class="trip-modal-subline">
+                Route: <strong>${depPlace}</strong> → <strong>${arrPlace}</strong>
+              </div>
+            </div>
+          `;
+          bodyEl.appendChild(item);
+        });
+      }
+
+      function openModal(kind) {
+        let list = [];
+        let title = "";
+        let subtitle = "";
+
+        if (kind === "today") {
+          title = "Today's Trips";
+          subtitle = "Trips departing today (<%= today %>)";
+          list = todayTripsData;
+        } else if (kind === "ongoing") {
+          title = "Ongoing Trips";
+          subtitle = "Trips currently between departure and arrival time.";
+          list = ongoingTripsData;
+        } else if (kind === "upcoming") {
+          title = "Upcoming Trips";
+          subtitle = "Trips scheduled to start after <%= today %>.";
+          list = upcomingTripsData;
+        }
+
+        titleEl.textContent = title;
+        subtitleEl.textContent = subtitle;
+        renderTrips(list);
+
+        overlay.style.display = "flex";
+        document.body.classList.add("modal-open");
+      }
+
+      function closeModal() {
+        overlay.style.display = "none";
+        document.body.classList.remove("modal-open");
+      }
+
+      document.querySelectorAll(".stat-card-click[data-trip-kind]").forEach((card) => {
+        const kind = card.getAttribute("data-trip-kind");
+        card.addEventListener("click", () => openModal(kind));
+      });
+
+      closeBtn.addEventListener("click", closeModal);
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && overlay.style.display === "flex") {
+          closeModal();
+        }
+      });
+    })();
   </script>
 
   <script src="/main.js"></script>

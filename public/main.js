@@ -9,7 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (darkToggle) {
     darkToggle.addEventListener("click", () => {
       body.classList.toggle("dark");
-      localStorage.setItem("dms_dark", body.classList.contains("dark") ? "1" : "0");
+      localStorage.setItem(
+        "dms_dark",
+        body.classList.contains("dark") ? "1" : "0"
+      );
     });
   }
 
@@ -55,7 +58,6 @@ if (modal && confirmForm) {
       const id = btn.getAttribute("data-id");
       const entity = btn.getAttribute("data-entity") || "trip";
 
-      // Choose route based on entity
       if (entity === "driver") {
         confirmForm.action = `/drivers/${id}/delete`;
       } else {
@@ -147,10 +149,8 @@ if (modal && confirmForm) {
     }, 150);
   });
 
-  // Unlock driver field on double-click
   driverInput.addEventListener("dblclick", unlockDriverInput);
 
-  // Close suggestions when clicking outside
   document.addEventListener("click", (e) => {
     if (!driverInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
       clearSuggestions();
