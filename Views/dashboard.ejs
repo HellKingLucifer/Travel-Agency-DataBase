@@ -637,8 +637,8 @@
     }
 
     // ---------- Trips per Month BAR ----------
-    const tripsLabels = <%- JSON.stringify(stats.monthlyLabels || []) %>;
-    const tripsData   = <%- JSON.stringify(stats.monthlyTotals || []) %>;
+    const tripsLabels = JSON.parse(`<%- JSON.stringify(stats.monthlyLabels || []) %>`);
+    const tripsData   = JSON.parse(`<%- JSON.stringify(stats.monthlyTotals || []) %>`);
 
     const tripsCtx = document.getElementById("monthlyTripsBarChart");
     if (tripsCtx) {
@@ -661,8 +661,8 @@
     }
 
     // ---------- Monthly Revenue BAR + DOUGHNUT ----------
-    const revLabels = <%- JSON.stringify(stats.monthlyRevenueLabels || []) %>;
-    const revData   = <%- JSON.stringify(stats.monthlyRevenueTotals || []) %>;
+    const revLabels = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueLabels || []) %>`);
+    const revData   = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueTotals || []) %>`);
     const palette   = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#f97316", "#ec4899"];
 
     const revBarCtx = document.getElementById("monthlyRevenueBarChart");
@@ -719,9 +719,9 @@
     }
 
     // ---------- Trip Modals (Today / Ongoing / Upcoming) ----------
-    const todayTripsData    = <%- JSON.stringify(todayTrips || []) %>;
-    const ongoingTripsData  = <%- JSON.stringify(ongoingTrips || []) %>;
-    const upcomingTripsData = <%- JSON.stringify(upcomingTrips || []) %>;
+    const todayTripsData    = JSON.parse(`<%- JSON.stringify(todayTrips || []) %>`);
+    const ongoingTripsData  = JSON.parse(`<%- JSON.stringify(ongoingTrips || []) %>`);
+    const upcomingTripsData = JSON.parse(`<%- JSON.stringify(upcomingTrips || []) %>`);
 
     (function() {
       const overlay   = document.getElementById("tripModalOverlay");
