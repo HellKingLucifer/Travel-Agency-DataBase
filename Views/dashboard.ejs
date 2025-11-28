@@ -12,7 +12,7 @@
   <div class="navbar">
     <a class="brand" href="/dashboard">
       <img src="/logo.svg" alt="logo" style="height:28px;">
-      <span>Travel Agency</span>
+      <span>Dashboard</span>
     </a>
 
     <div class="nav-links">
@@ -28,11 +28,10 @@
 
   <!-- MAIN -->
   <div class="container">
-<h1 class="dashboard-title">Dashboard</h1>
+
     <!-- Stats -->
     <div class="card dashboard-card">
-      
-      <!-- ROW 1 -->
+      <!-- Row 1 -->
       <div class="stats-grid">
         <button type="button" class="stat-card stat-card-click" data-trip-kind="today">
           <h3>Today's Trips</h3>
@@ -53,7 +52,7 @@
         </button>
       </div>
 
-      <!-- ROW 2 -->
+      <!-- Row 2 -->
       <div class="stats-grid">
         <div class="stat-card">
           <h3>Total Trips (All Time)</h3>
@@ -72,9 +71,10 @@
       </div>
     </div>
 
-    <!-- Charts 2x2 Grid -->
+    <!-- Charts Grid -->
     <div class="dashboard-charts">
 
+      <!-- DRIVER STATUS -->
       <div class="chart-card">
         <h3>Driver Status</h3>
         <p class="muted small">
@@ -82,19 +82,28 @@
           Idle: <strong><%= stats.idleDrivers %></strong> ·
           Upcoming: <strong><%= stats.upcomingDrivers %></strong>
         </p>
+        <p class="muted small">
+          <em>Tip: Click a slice to see drivers in that status.</em>
+        </p>
         <canvas id="driverPieChart"></canvas>
       </div>
 
+      <!-- TRIPS / MONTH -->
       <div class="chart-card">
         <h3>Trips Per Month</h3>
+        <p class="muted small">
+          <em>Tip: Click a bar to see all trips for that month.</em>
+        </p>
         <canvas id="monthlyTripsBarChart"></canvas>
       </div>
 
+      <!-- REVENUE SHARE -->
       <div class="chart-card">
         <h3>Revenue Share (By Month)</h3>
         <canvas id="revenueDoughnutChart"></canvas>
       </div>
 
+      <!-- MONTHLY REVENUE -->
       <div class="chart-card">
         <h3>Monthly Revenue</h3>
         <canvas id="monthlyRevenueBarChart"></canvas>
@@ -102,7 +111,7 @@
 
     </div>
 
-    <!-- Trip Timeline -->
+    <!-- Timeline -->
     <div class="card timeline-card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2>Upcoming Trips</h2>
@@ -139,9 +148,9 @@
       </div>
     </div>
 
-  </div>
+  </div> <!-- /container -->
 
-  <!-- Trip Modal (shared for Today / Ongoing / Upcoming) -->
+  <!-- Trip Type Modal (Today / Ongoing / Upcoming) -->
   <div id="tripModalOverlay" class="trip-modal-overlay">
     <div class="trip-modal-box">
       <div class="trip-modal-header">
@@ -151,9 +160,35 @@
         </div>
         <button id="tripModalClose" type="button" class="trip-modal-close">&times;</button>
       </div>
-      <div id="tripModalBody" class="trip-modal-body">
-        <!-- Filled by JS -->
+      <div id="tripModalBody" class="trip-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Driver Status Modal -->
+  <div id="driverModalOverlay" class="trip-modal-overlay">
+    <div class="trip-modal-box">
+      <div class="trip-modal-header">
+        <div>
+          <h2 id="driverModalTitle">Drivers</h2>
+          <p id="driverModalSubtitle" class="trip-modal-subtitle"></p>
+        </div>
+        <button id="driverModalClose" type="button" class="trip-modal-close">&times;</button>
       </div>
+      <div id="driverModalBody" class="trip-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Month Trips Modal -->
+  <div id="monthTripsModal" class="trip-modal-overlay">
+    <div class="trip-modal-box">
+      <div class="trip-modal-header">
+        <div>
+          <h2 id="monthTripsTitle">Trips in Month</h2>
+          <p id="monthTripsSubtitle" class="trip-modal-subtitle"></p>
+        </div>
+        <button id="monthTripsClose" type="button" class="trip-modal-close">&times;</button>
+      </div>
+      <div id="monthTripsBody" class="trip-modal-body"></div>
     </div>
   </div>
 
@@ -161,8 +196,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    // ---------- Stat Number Animation ----------
-    document.querySelectorAll(".stat-value").forEach(el => {
+    // =====================================================
+    // STAT NUMBER ANIMATION
+    // =====================================================
+    document.querySelectorAll(".stat-value").forEach((el) => {
       const target = Number(el.dataset.value) || 0;
       let current = 0;
       const steps = 40;
@@ -178,14 +215,18 @@
       }, 20);
     });
 
-    // ---------- Driver Status PIE ----------
+    // =====================================================
+    // DRIVER STATUS PIE CHART
+    // =====================================================
     const busyDrivers     = Number("<%= stats.busyDrivers %>");
     const idleDrivers     = Number("<%= stats.idleDrivers %>");
     const upcomingDrivers = Number("<%= stats.upcomingDrivers %>");
 
     const driverPieCtx = document.getElementById("driverPieChart");
+    let driverPieChart = null;
+
     if (driverPieCtx) {
-      new Chart(driverPieCtx, {
+      driverPieChart = new Chart(driverPieCtx, {
         type: "pie",
         data: {
           labels: ["Busy", "Idle", "Upcoming"],
@@ -214,13 +255,150 @@
       });
     }
 
-    // ---------- Trips per Month BAR ----------
+    // =====================================================
+    // DRIVER STATUS MODAL
+    // =====================================================
+    const driversData = JSON.parse(`<%- JSON.stringify(driversData || []) %>`);
+
+    (function () {
+      const overlay  = document.getElementById("driverModalOverlay");
+      const bodyEl   = document.getElementById("driverModalBody");
+      const titleEl  = document.getElementById("driverModalTitle");
+      const subEl    = document.getElementById("driverModalSubtitle");
+      const closeBtn = document.getElementById("driverModalClose");
+
+      if (!overlay || !bodyEl || !closeBtn) return;
+
+      function phoneUI(label, phone) {
+        const safePhone = phone || "";
+        const clean = safePhone.replace(/[^\d]/g, "");
+        if (!clean) return `${label}: ${safePhone || "-"}`;
+        return `
+          ${label}:
+          <a class="call-link" href="tel:${clean}">${safePhone}</a>
+          <a class="wa-icon" href="https://wa.me/${clean}" target="_blank" title="Message on WhatsApp">💬</a>
+        `;
+      }
+
+      function openDriverModal(status) {
+        const list = (driversData || []).filter((d) => d.status === status);
+        bodyEl.innerHTML = "";
+
+        if (!list.length) {
+          bodyEl.innerHTML = `<div class="trip-modal-empty">No drivers found in this status.</div>`;
+          titleEl.textContent = `${status.toUpperCase()} DRIVERS`;
+          subEl.textContent = "Total: 0";
+          overlay.style.display = "flex";
+          document.body.classList.add("modal-open");
+          return;
+        }
+
+        list.forEach((d) => {
+          const t = d.currentTrip || d.upcomingTrip;
+          const item = document.createElement("div");
+          item.className = "trip-modal-item";
+
+          let tripBlock = "";
+
+          if (status === "idle" || !t) {
+            tripBlock = `
+              <div class="trip-modal-subline">
+                <strong>Status:</strong> Idle — No current booking
+              </div>
+            `;
+          } else {
+            const depPlace = t.departure_place || "-";
+            const arrPlace = t.arrival_place || "-";
+            const depDate  = t.departure_date || "-";
+            const depTime  = t.departure_time || "-";
+            const custPhone= t.phone_number || "";
+
+            tripBlock = `
+              <div class="trip-modal-subline">
+                <strong>Route:</strong> ${depPlace} → ${arrPlace}
+              </div>
+              <div class="trip-modal-subline">
+                <strong>Departure:</strong> ${depDate} ${depTime}
+              </div>
+              <div class="trip-modal-subline">
+                ${phoneUI("Customer", custPhone)}
+              </div>
+            `;
+          }
+
+          item.innerHTML = `
+            <div style="flex:1;">
+              <div class="trip-modal-mainline">
+                <span class="trip-chip trip-chip-driver">${d.name || "Unnamed Driver"}</span>
+              </div>
+              <div class="trip-modal-subline">
+                ${phoneUI("Phone", d.phone || "")}
+              </div>
+              <div class="trip-modal-subline">
+                <span class="trip-chip trip-chip-car">Car</span>
+                ${d.car || "-"} · ${d.car_number || "-"}
+              </div>
+              ${tripBlock}
+            </div>
+          `;
+          bodyEl.appendChild(item);
+        });
+
+        titleEl.textContent = `${status.toUpperCase()} DRIVERS`;
+        subEl.textContent = `Total: ${list.length}`;
+
+        overlay.style.display = "flex";
+        document.body.classList.add("modal-open");
+      }
+
+      // Pie slice click -> open driver modal
+      if (driverPieCtx && driverPieChart) {
+        driverPieCtx.addEventListener("click", (e) => {
+          const points = driverPieChart.getElementsAtEventForMode(
+            e,
+            "nearest",
+            { intersect: true },
+            true
+          );
+          if (!points.length) return;
+          const idx = points[0].index;
+          const statusMap = ["busy", "idle", "upcoming"];
+          const status = statusMap[idx] || "idle";
+          openDriverModal(status);
+        });
+      }
+
+      closeBtn.addEventListener("click", () => {
+        overlay.style.display = "none";
+        document.body.classList.remove("modal-open");
+      });
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+          overlay.style.display = "none";
+          document.body.classList.remove("modal-open");
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && overlay.style.display === "flex") {
+          overlay.style.display = "none";
+          document.body.classList.remove("modal-open");
+        }
+      });
+    })();
+
+    // =====================================================
+    // TRIPS PER MONTH BAR + MONTH TRIPS MODAL HOOK
+    // =====================================================
     const tripsLabels = JSON.parse(`<%- JSON.stringify(stats.monthlyLabels || []) %>`);
     const tripsData   = JSON.parse(`<%- JSON.stringify(stats.monthlyTotals || []) %>`);
 
     const tripsCtx = document.getElementById("monthlyTripsBarChart");
+    let tripsChart = null;
+
     if (tripsCtx) {
-      new Chart(tripsCtx, {
+      tripsChart = new Chart(tripsCtx, {
         type: "bar",
         data: {
           labels: tripsLabels,
@@ -233,12 +411,20 @@
         options: {
           plugins: { legend: { display: false } },
           scales: { y: { beginAtZero: true } },
-          animation: { duration: 1000, easing: "easeOutCubic" }
+          animation: { duration: 1000, easing: "easeOutCubic" },
+          onClick: (evt, elements) => {
+            if (!elements.length) return;
+            const idx = elements[0].index;
+            const month = tripsLabels[idx];
+            if (month) openMonthTripsModal(month);
+          }
         }
       });
     }
 
-    // ---------- Monthly Revenue BAR + DOUGHNUT ----------
+    // =====================================================
+    // MONTHLY REVENUE BAR + REVENUE DOUGHNUT
+    // =====================================================
     const revLabels = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueLabels || []) %>`);
     const revData   = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueTotals || []) %>`);
     const palette   = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#f97316", "#ec4899"];
@@ -296,19 +482,37 @@
       });
     }
 
-    // ---------- Trip Modals (Today / Ongoing / Upcoming) ----------
+    // =====================================================
+    // TRIP MODALS (TODAY / ONGOING / UPCOMING)
+    // =====================================================
     const todayTripsData    = JSON.parse(`<%- JSON.stringify(todayTrips || []) %>`);
     const ongoingTripsData  = JSON.parse(`<%- JSON.stringify(ongoingTrips || []) %>`);
     const upcomingTripsData = JSON.parse(`<%- JSON.stringify(upcomingTrips || []) %>`);
 
-    (function() {
-      const overlay   = document.getElementById("tripModalOverlay");
-      const titleEl   = document.getElementById("tripModalTitle");
-      const subtitleEl= document.getElementById("tripModalSubtitle");
-      const bodyEl    = document.getElementById("tripModalBody");
-      const closeBtn  = document.getElementById("tripModalClose");
+    (function () {
+      const overlay    = document.getElementById("tripModalOverlay");
+      const titleEl    = document.getElementById("tripModalTitle");
+      const subtitleEl = document.getElementById("tripModalSubtitle");
+      const bodyEl     = document.getElementById("tripModalBody");
+      const closeBtn   = document.getElementById("tripModalClose");
 
       if (!overlay || !titleEl || !subtitleEl || !bodyEl || !closeBtn) return;
+
+      function phoneUI(name, phone) {
+        const safeName = name || "-";
+        const safePhone = phone || "-";
+        const cleanPhone = (phone || "").replace(/[^0-9]/g, "");
+
+        if (!cleanPhone) {
+          return `${safeName} · ${safePhone}`;
+        }
+
+        return `
+          ${safeName} · 
+          <a class="call-link" href="tel:${cleanPhone}">${safePhone}</a>
+          <a class="wa-icon" title="Message on WhatsApp" href="https://wa.me/${cleanPhone}" target="_blank">💬</a>
+        `;
+      }
 
       function renderTrips(list) {
         bodyEl.innerHTML = "";
@@ -324,17 +528,17 @@
           const item = document.createElement("div");
           item.className = "trip-modal-item";
 
-          const id = t.id ?? "";
-          const customerName = t.customer_name || "-";
+          const id            = t.id ?? "";
+          const customerName  = t.customer_name || "-";
           const customerPhone = t.phone_number || "-";
-          const driverName = t.assigned_driver || "-";
-          const driverPhone = t.driver_phone || "-";
-          const car = t.assigned_car || "-";
-          const carNo = t.car_number || "-";
-          const depTime = t.departure_time || "-";
-          const depPlace = t.departure_place || "-";
-          const arrTime = t.arrival_time || "-";
-          const arrPlace = t.arrival_place || "-";
+          const driverName    = t.assigned_driver || "-";
+          const driverPhone   = t.driver_phone || "-";
+          const car           = t.assigned_car || "-";
+          const carNo         = t.car_number || "-";
+          const depTime       = t.departure_time || "-";
+          const depPlace      = t.departure_place || "-";
+          const arrTime       = t.arrival_time || "-";
+          const arrPlace      = t.arrival_place || "-";
 
           item.innerHTML = `
             <div style="flex:1;">
@@ -345,11 +549,11 @@
               </div>
               <div class="trip-modal-subline" style="margin-bottom:4px;">
                 <span class="trip-chip trip-chip-customer">Customer</span>
-                ${customerName} · ${customerPhone}
+                ${phoneUI(customerName, customerPhone)}
               </div>
               <div class="trip-modal-subline" style="margin-bottom:4px;">
                 <span class="trip-chip trip-chip-driver">Driver</span>
-                ${driverName} · ${driverPhone}
+                ${phoneUI(driverName, driverPhone)}
               </div>
               <div class="trip-modal-subline" style="margin-bottom:4px;">
                 <span class="trip-chip trip-chip-car">Car</span>
@@ -396,10 +600,12 @@
         document.body.classList.remove("modal-open");
       }
 
-      document.querySelectorAll(".stat-card-click[data-trip-kind]").forEach((card) => {
-        const kind = card.getAttribute("data-trip-kind");
-        card.addEventListener("click", () => openModal(kind));
-      });
+      document
+        .querySelectorAll(".stat-card-click[data-trip-kind]")
+        .forEach((card) => {
+          const kind = card.getAttribute("data-trip-kind");
+          card.addEventListener("click", () => openModal(kind));
+        });
 
       closeBtn.addEventListener("click", closeModal);
 
@@ -413,8 +619,110 @@
         }
       });
     })();
+
+    // =====================================================
+    // MONTH TRIPS MODAL (OPENED FROM BAR CHART)
+    // =====================================================
+    (function () {
+      const overlay  = document.getElementById("monthTripsModal");
+      const bodyEl   = document.getElementById("monthTripsBody");
+      const titleEl  = document.getElementById("monthTripsTitle");
+      const subEl    = document.getElementById("monthTripsSubtitle");
+      const closeBtn = document.getElementById("monthTripsClose");
+
+      if (!overlay || !bodyEl || !closeBtn) return;
+
+      function renderMonthTrips(month, list) {
+        bodyEl.innerHTML = "";
+        if (!list || list.length === 0) {
+          bodyEl.innerHTML = `<div class="trip-modal-empty">No trips in this month.</div>`;
+          subEl.textContent = "Total: 0";
+          return;
+        }
+
+        subEl.textContent = `Total: ${list.length}`;
+        list.forEach((t) => {
+          const item = document.createElement("div");
+          item.className = "trip-modal-item";
+
+          const driverName  = t.assigned_driver || "-";
+          const driverPhone = t.driver_phone || "";
+          const car         = t.assigned_car || "-";
+          const carNo       = t.car_number || "-";
+          const depDate     = t.departure_date || "-";
+          const depPlace    = t.departure_place || "-";
+          const arrDate     = t.arrival_date || "-";
+          const arrPlace    = t.arrival_place || "-";
+
+          const cleanPhone = driverPhone.replace(/[^\d]/g, "");
+
+          item.innerHTML = `
+            <div style="flex:1;">
+              <div class="trip-modal-mainline">
+                <span class="trip-chip trip-chip-driver">${driverName}</span>
+              </div>
+              <div class="trip-modal-subline">
+                Driver Phone:
+                ${
+                  cleanPhone
+                    ? `<a class="call-link" href="tel:${cleanPhone}">${driverPhone}</a>
+                       <a class="wa-icon" href="https://wa.me/${cleanPhone}" target="_blank">💬</a>`
+                    : "-"
+                }
+              </div>
+              <div class="trip-modal-subline">
+                <span class="trip-chip trip-chip-car">Car</span>
+                ${car} · ${carNo}
+              </div>
+              <div class="trip-modal-subline">
+                <strong>Departure:</strong> ${depDate} — ${depPlace}
+              </div>
+              <div class="trip-modal-subline">
+                <strong>Arrival:</strong> ${arrDate} — ${arrPlace}
+              </div>
+            </div>
+          `;
+
+          bodyEl.appendChild(item);
+        });
+      }
+
+      window.openMonthTripsModal = function (month) {
+        titleEl.textContent = `Trips in ${month}`;
+        subEl.textContent = "";
+        bodyEl.innerHTML = `<div class="trip-modal-empty">Loading...</div>`;
+
+        overlay.style.display = "flex";
+        document.body.classList.add("modal-open");
+
+        fetch(`/api/month-trips?month=${encodeURIComponent(month)}`)
+          .then((res) => res.json())
+          .then((list) => {
+            renderMonthTrips(month, list || []);
+          })
+          .catch(() => {
+            bodyEl.innerHTML = `<div class="trip-modal-empty">Failed to load trips for this month.</div>`;
+          });
+      };
+
+      function closeModal() {
+        overlay.style.display = "none";
+        document.body.classList.remove("modal-open");
+      }
+
+      closeBtn.addEventListener("click", closeModal);
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && overlay.style.display === "flex") {
+          closeModal();
+        }
+      });
+    })();
   </script>
 
+  <!-- Shared UI utilities (dark mode, delete modal, autocomplete, etc.) -->
   <script src="/main.js"></script>
 </body>
 </html>

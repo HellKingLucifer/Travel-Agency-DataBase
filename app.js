@@ -101,7 +101,7 @@ app.get("/dashboard", (req, res) => {
   db.get("SELECT COUNT(*) AS total FROM trips", [], (e1, r1) => {
     stats.totalTrips = r1?.total || 0;
 
-    // 2) Today's trips (count)
+    // 2) Today trips count
     db.get(
       "SELECT COUNT(*) AS today_count FROM trips WHERE departure_date = ?",
       [today],
@@ -115,15 +115,14 @@ app.get("/dashboard", (req, res) => {
           (e3, r3) => {
             stats.revenue = r3?.revenue || 0;
 
-            // 4) Drivers list
-            db.all("SELECT id, name FROM drivers", [], (e4, drivers) => {
+            // 4) Drivers list (full row for modal)
+            db.all("SELECT * FROM drivers", [], (e4, drivers) => {
               drivers = drivers || [];
               stats.totalDrivers = drivers.length;
 
-              // 5) Driver status (Busy / Idle / Upcoming)
+              // 5) Driver status using trips
               db.all(
-                `SELECT assigned_driver, departure_date, departure_time,
-                        arrival_date, arrival_time
+                `SELECT *
                  FROM trips
                  WHERE assigned_driver IS NOT NULL
                    AND TRIM(assigned_driver) != ''`,
@@ -144,7 +143,7 @@ app.get("/dashboard", (req, res) => {
                   let upcomingDrivers = 0;
 
                   drivers.forEach((d) => {
-                    const name = (d.name || "").trim();
+                    const name = d.name?.trim() || "";
                     const list = byDriver.get(name) || [];
 
                     if (list.length === 0) {
@@ -160,11 +159,8 @@ app.get("/dashboard", (req, res) => {
                       const arr = makeDate(t.arrival_date, t.arrival_time);
                       if (!dep || !arr) return;
 
-                      if (dep <= now && now <= arr) {
-                        hasCurrent = true;
-                      } else if (dep > now) {
-                        hasFuture = true;
-                      }
+                      if (dep <= now && now <= arr) hasCurrent = true;
+                      else if (dep > now) hasFuture = true;
                     });
 
                     if (hasCurrent) busy++;
@@ -176,106 +172,176 @@ app.get("/dashboard", (req, res) => {
                   stats.idleDrivers = idle;
                   stats.upcomingDrivers = upcomingDrivers;
 
-                  // 6) Trips per month (last 6)
+                  // 6) Trips & revenue per month
+                  const curr = new Date(today + "T00:00");
+
+                  const targetMonths = [];
+                  for (let i = -2; i <= 2; i++) {
+                    const d = new Date(curr);
+                    d.setMonth(d.getMonth() + i);
+                    const ym = d.toISOString().slice(0, 7);
+                    targetMonths.push(ym);
+                  }
+
                   db.all(
                     `SELECT strftime('%Y-%m', departure_date) AS m,
-                            COUNT(*) AS cnt
+                            COUNT(*) AS cnt,
+                            SUM(travelling_fee) AS rev
                      FROM trips
-                     WHERE departure_date IS NOT NULL
-                     GROUP BY m
-                     ORDER BY m DESC
-                     LIMIT 6`,
-                    [],
-                    (e6, rowsTrips) => {
-                      rowsTrips = rowsTrips || [];
-                      rowsTrips.reverse();
-                      stats.monthlyLabels = rowsTrips.map((r) => r.m);
-                      stats.monthlyTotals = rowsTrips.map((r) => r.cnt);
+                     WHERE departure_date >= ?
+                       AND departure_date <= ?
+                     GROUP BY m`,
+                    [
+                      targetMonths[0] + "-01",
+                      targetMonths[4] + "-31"
+                    ],
+                    (e6, monthlyRows) => {
+                      monthlyRows = monthlyRows || [];
+                      const map = new Map();
+                      monthlyRows.forEach((r) => map.set(r.m, r));
 
-                      // 7) Revenue per month (last 6)
+                      stats.monthlyLabels = targetMonths;
+                      stats.monthlyTotals = targetMonths.map(
+                        (m) => map.get(m)?.cnt || 0
+                      );
+                      stats.monthlyRevenueLabels = targetMonths;
+                      stats.monthlyRevenueTotals = targetMonths.map(
+                        (m) => map.get(m)?.rev || 0
+                      );
+
+                      // 8) Upcoming timeline (next 6 trips)
                       db.all(
-                        `SELECT strftime('%Y-%m', departure_date) AS m,
-                                SUM(travelling_fee) AS rev
+                        `SELECT id, customer_name, assigned_driver,
+                                departure_place, arrival_place,
+                                departure_date, departure_time
                          FROM trips
-                         WHERE departure_date IS NOT NULL
-                         GROUP BY m
-                         ORDER BY m DESC
+                         WHERE departure_date >= ?
+                         ORDER BY departure_date, departure_time
                          LIMIT 6`,
-                        [],
-                        (e7, rowsRev) => {
-                          rowsRev = rowsRev || [];
-                          rowsRev.reverse();
-                          stats.monthlyRevenueLabels = rowsRev.map(
-                            (r) => r.m
-                          );
-                          stats.monthlyRevenueTotals = rowsRev.map(
-                            (r) => r.rev || 0
-                          );
+                        [today],
+                        (e8, timelineRows) => {
+                          const timelineTrips = timelineRows || [];
 
-                          // 8) Upcoming timeline (next 6 trips)
+                          // 9) Today / ongoing / upcoming trip modals data
                           db.all(
-                            `SELECT id, customer_name, assigned_driver,
-                                    departure_place, arrival_place,
-                                    departure_date, departure_time
+                            `SELECT *
                              FROM trips
-                             WHERE departure_date >= ?
-                             ORDER BY departure_date, departure_time
-                             LIMIT 6`,
+                             WHERE departure_date = ?
+                             ORDER BY departure_time`,
                             [today],
-                            (e8, timelineRows) => {
-                              const timelineTrips = timelineRows || [];
+                            (e9, todayRows) => {
+                              const todayTrips = todayRows || [];
 
-                              // 9) Today / Ongoing / Upcoming lists for modals
                               db.all(
-                                `SELECT *
-                                 FROM trips
-                                 WHERE departure_date = ?
-                                 ORDER BY departure_time`,
-                                [today],
-                                (e9, todayRows) => {
-                                  const todayTrips = todayRows || [];
+                                `SELECT * FROM trips`,
+                                [],
+                                (e10, allTrips) => {
+                                  allTrips = allTrips || [];
 
-                                  db.all(
-                                    `SELECT * FROM trips`,
-                                    [],
-                                    (e10, allTrips) => {
-                                      allTrips = allTrips || [];
+                                  const ongoingTrips = [];
+                                  const upcomingTrips = [];
 
-                                      const ongoingTrips = [];
-                                      const upcomingTrips = [];
+                                  allTrips.forEach((t) => {
+                                    const dep = makeDate(t.departure_date, t.departure_time);
+                                    const arr = makeDate(t.arrival_date, t.arrival_time);
+                                    if (!dep || !arr) return;
 
-                                      allTrips.forEach((t) => {
-                                        const dep = makeDate(
-                                          t.departure_date,
-                                          t.departure_time
-                                        );
-                                        const arr = makeDate(
-                                          t.arrival_date,
-                                          t.arrival_time
-                                        );
-                                        if (!dep || !arr) return;
+                                    if (dep <= now && now <= arr)
+                                      ongoingTrips.push(t);
+                                    else if (t.departure_date > today)
+                                      upcomingTrips.push(t);
+                                  });
 
-                                        if (dep <= now && now <= arr) {
-                                          ongoingTrips.push(t);
-                                        } else if (
-                                          t.departure_date &&
-                                          t.departure_date > today
+                                  // Driver status full details
+                                  const driverStatusList = [];
+
+                                  drivers.forEach((d) => {
+                                    const name = d.name?.trim() || "";
+                                    const list = byDriver.get(name) || [];
+
+                                    let status = "idle";
+                                    let currentTrip = null;
+                                    let upcomingTrip = null;
+
+                                    list.forEach((t) => {
+                                      const dep = makeDate(t.departure_date, t.departure_time);
+                                      const arr = makeDate(t.arrival_date, t.arrival_time);
+                                      if (!dep || !arr) return;
+
+                                      if (dep <= now && now <= arr) {
+                                        status = "busy";
+                                        if (
+                                          !currentTrip ||
+                                          arr <
+                                            makeDate(
+                                              currentTrip.arrival_date,
+                                              currentTrip.arrival_time
+                                            )
                                         ) {
-                                          // Upcoming = strictly after today
-                                          upcomingTrips.push(t);
+                                          currentTrip = t;
                                         }
-                                      });
+                                      } else if (dep > now) {
+                                        if (status !== "busy") status = "upcoming";
+                                        if (
+                                          !upcomingTrip ||
+                                          dep <
+                                            makeDate(
+                                              upcomingTrip.departure_date,
+                                              upcomingTrip.departure_time
+                                            )
+                                        ) {
+                                          upcomingTrip = t;
+                                        }
+                                      }
+                                    });
 
-                                      res.render("dashboard", {
-                                        stats,
-                                        today,
-                                        timelineTrips,
-                                        todayTrips,
-                                        ongoingTrips,
-                                        upcomingTrips
-                                      });
-                                    }
-                                  );
+                                    driverStatusList.push({
+                                      ...d,
+                                      status,
+                                      currentTrip,
+                                      upcomingTrip
+                                    });
+                                  });
+
+                                  // Sort: busy → upcoming → idle
+                                  driverStatusList.sort((a, b) => {
+                                    const order = {
+                                      busy: 0,
+                                      upcoming: 1,
+                                      idle: 2
+                                    };
+
+                                    if (a.status !== b.status)
+                                      return order[a.status] - order[b.status];
+
+                                    const aTrip = a.currentTrip || a.upcomingTrip;
+                                    const bTrip = b.currentTrip || b.upcomingTrip;
+
+                                    if (!aTrip || !bTrip)
+                                      return a.name.localeCompare(b.name);
+
+                                    const aTime = makeDate(
+                                      aTrip.arrival_date || aTrip.departure_date,
+                                      aTrip.arrival_time || aTrip.departure_time
+                                    );
+
+                                    const bTime = makeDate(
+                                      bTrip.arrival_date || bTrip.departure_date,
+                                      bTrip.arrival_time || bTrip.departure_time
+                                    );
+
+                                    return aTime - bTime;
+                                  });
+
+                                  res.render("dashboard", {
+                                    stats,
+                                    today,
+                                    timelineTrips,
+                                    todayTrips,
+                                    ongoingTrips,
+                                    upcomingTrips,
+                                    driversData: driverStatusList
+                                  });
                                 }
                               );
                             }
@@ -331,8 +397,7 @@ app.post("/new-trip", (req, res) => {
       departure_place, departure_date, departure_time,
       arrival_place, arrival_date, arrival_time,
       assigned_driver, assigned_car, driver_phone, car_number,
-      travelling_fee, includes_toll,
-      created_at
+      travelling_fee, includes_toll, created_at
     )
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
@@ -369,7 +434,7 @@ app.post("/new-trip", (req, res) => {
   );
 });
 
-// ------------------ TRIPS LIST (search + pagination) ------------------
+// ------------------ TRIPS LIST ------------------
 app.get("/trips", (req, res) => {
   const page = Math.max(1, parseInt(req.query.page, 10) || 1);
   const limit = 10;
@@ -407,7 +472,6 @@ app.get("/trips", (req, res) => {
 
     db.all(dataSql, [...params, limit, offset], (err2, trips) => {
       if (err2) return res.status(500).send("DB Error");
-
       res.render("trips", {
         trips,
         search: searchRaw,
@@ -426,7 +490,6 @@ app.get("/trips/:id", (req, res) => {
   });
 });
 
-// Print-friendly invoice
 app.get("/trips/:id/print", (req, res) => {
   db.get("SELECT * FROM trips WHERE id=?", [req.params.id], (err, trip) => {
     if (!trip) return res.status(404).send("Trip not found");
@@ -434,7 +497,7 @@ app.get("/trips/:id/print", (req, res) => {
   });
 });
 
-// ------------------ EDIT TRIP (PAGE) ------------------
+// ------------------ EDIT TRIP ------------------
 app.get("/trips/:id/edit", (req, res) => {
   db.get("SELECT * FROM trips WHERE id=?", [req.params.id], (err, trip) => {
     if (!trip) return res.status(404).send("Trip not found");
@@ -442,7 +505,6 @@ app.get("/trips/:id/edit", (req, res) => {
   });
 });
 
-// ------------------ EDIT TRIP (UPDATE) ------------------
 app.post("/trips/:id/edit", (req, res) => {
   const {
     customer_name,
@@ -502,16 +564,16 @@ app.post("/trips/:id/edit", (req, res) => {
 
 // ------------------ DELETE TRIP ------------------
 app.post("/trips/:id/delete", (req, res) => {
-  db.run("DELETE FROM trips WHERE id=?", [req.params.id], () =>
-    res.redirect("/trips")
-  );
+  db.run("DELETE FROM trips WHERE id=?", [req.params.id], () => {
+    res.redirect("/trips");
+  });
 });
 
 // -----------------------------------------------------
 // DRIVERS MODULE
 // -----------------------------------------------------
 
-// List drivers (with search)
+// List drivers (supports search)
 app.get("/drivers", (req, res) => {
   const searchRaw = req.query.search || "";
   let sql;
@@ -538,7 +600,7 @@ app.get("/drivers", (req, res) => {
 // New driver form
 app.get("/drivers/new", (req, res) => res.render("new-driver"));
 
-// Create driver
+// Add new driver
 app.post("/drivers/new", (req, res) => {
   const { name, phone, car, car_number, license, notes } = req.body;
   const created_at = new Date().toISOString();
@@ -550,7 +612,7 @@ app.post("/drivers/new", (req, res) => {
   );
 });
 
-// Edit driver page
+// Edit driver form
 app.get("/drivers/:id/edit", (req, res) => {
   db.get("SELECT * FROM drivers WHERE id=?", [req.params.id], (err, driver) => {
     if (!driver) return res.status(404).send("Driver not found");
@@ -581,6 +643,7 @@ app.post("/drivers/:id/delete", (req, res) => {
 // ------------------ AUTOCOMPLETE API ------------------
 app.get("/api/drivers", (req, res) => {
   const q = `%${req.query.search || ""}%`;
+
   db.all(
     `SELECT id, name, phone, car, car_number
      FROM drivers
@@ -625,6 +688,29 @@ app.get("/export/csv", (req, res) => {
   });
 });
 
+// =====================================================
+// API → Trips for a given Month
+// =====================================================
+app.get("/api/month-trips", (req, res) => {
+  const month = req.query.month;
+  if (!month) return res.json([]);
+
+  db.all(
+    `SELECT *
+     FROM trips
+     WHERE departure_date LIKE ?
+     ORDER BY departure_date, departure_time`,
+    [`${month}%`],
+    (err, rows) => {
+      if (err) {
+        console.error("Month Trips Error:", err);
+        return res.json([]);
+      }
+      res.json(rows || []);
+    }
+  );
+});
+ 
 // ------------------ START SERVER ------------------
 app.listen(PORT, () => {
   console.log(`🚀 Server running → http://localhost:${PORT}`);
