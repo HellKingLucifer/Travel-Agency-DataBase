@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <title>Dashboard - Travel Agency</title>
   <link rel="stylesheet" href="/styles.css">
-
 </head>
 
 <body>
@@ -29,65 +28,53 @@
 
   <!-- MAIN -->
   <div class="container">
-
+<h1 class="dashboard-title">Dashboard</h1>
     <!-- Stats -->
     <div class="card dashboard-card">
-      <h1>Dashboard</h1>
-
+      
+      <!-- ROW 1 -->
       <div class="stats-grid">
-        <!-- Today's Trips (click → modal) -->
         <button type="button" class="stat-card stat-card-click" data-trip-kind="today">
           <h3>Today's Trips</h3>
           <p class="stat-value" data-value="<%= stats.todayTrips %>">0</p>
-          <span class="stat-pill">Click to view trips</span>
-          <span class="stat-subtext">Trips departing on <strong><%= today %></strong></span>
+          <span class="stat-pill">Click to preview</span>
         </button>
 
-        <!-- Ongoing Trips (click → modal) -->
         <button type="button" class="stat-card stat-card-click" data-trip-kind="ongoing">
           <h3>Ongoing Trips</h3>
           <p class="stat-value" data-value="<%= (ongoingTrips || []).length %>">0</p>
-          <span class="stat-pill">Click to see running</span>
-          <span class="stat-subtext">Currently between departure & arrival</span>
+          <span class="stat-pill">Click to preview</span>
         </button>
 
-        <!-- Upcoming Trips (click → modal) -->
         <button type="button" class="stat-card stat-card-click" data-trip-kind="upcoming">
           <h3>Upcoming Trips</h3>
           <p class="stat-value" data-value="<%= (upcomingTrips || []).length %>">0</p>
-          <span class="stat-pill">Click to preview next</span>
-          <span class="stat-subtext">Trips starting after <strong><%= today %></strong></span>
+          <span class="stat-pill">Click to preview</span>
         </button>
+      </div>
 
-        <!-- Total Trips -->
+      <!-- ROW 2 -->
+      <div class="stats-grid">
         <div class="stat-card">
           <h3>Total Trips (All Time)</h3>
           <p class="stat-value" data-value="<%= stats.totalTrips %>">0</p>
-          <span class="stat-subtext">All trips stored in the system</span>
         </div>
 
-        <!-- Total Drivers -->
         <div class="stat-card">
           <h3>Total Drivers</h3>
           <p class="stat-value" data-value="<%= stats.totalDrivers %>">0</p>
-          <span class="stat-subtext">
-            Busy: <strong><%= stats.busyDrivers %></strong> ·
-            Idle: <strong><%= stats.idleDrivers %></strong> ·
-            Upcoming: <strong><%= stats.upcomingDrivers %></strong>
-          </span>
         </div>
 
-        <!-- Total Revenue -->
         <div class="stat-card">
           <h3>Total Revenue (₹)</h3>
           <p class="stat-value" data-value="<%= Math.round(stats.revenue || 0) %>">0</p>
-          <span class="stat-subtext">Rounded from ₹<%= Number(stats.revenue || 0).toFixed(2) %></span>
         </div>
       </div>
     </div>
 
-    <!-- Charts Row 1: Driver status + Trips per month -->
-    <div class="charts-row">
+    <!-- Charts 2x2 Grid -->
+    <div class="dashboard-charts">
+
       <div class="chart-card">
         <h3>Driver Status</h3>
         <p class="muted small">
@@ -102,10 +89,7 @@
         <h3>Trips Per Month</h3>
         <canvas id="monthlyTripsBarChart"></canvas>
       </div>
-    </div>
 
-    <!-- Charts Row 2: Revenue doughnut + Revenue bar -->
-    <div class="charts-row" style="margin-top:22px;">
       <div class="chart-card">
         <h3>Revenue Share (By Month)</h3>
         <canvas id="revenueDoughnutChart"></canvas>
@@ -115,6 +99,7 @@
         <h3>Monthly Revenue</h3>
         <canvas id="monthlyRevenueBarChart"></canvas>
       </div>
+
     </div>
 
     <!-- Trip Timeline -->

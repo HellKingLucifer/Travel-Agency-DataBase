@@ -19,6 +19,7 @@ body{
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   transition: background .25s, color .25s;
+  overflow-y:auto; /* ensure page scrolls */
 }
 
 /* Dark mode */
@@ -87,6 +88,13 @@ body.dark{
   align-items:center;
 }
 
+.dashboard-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 10px 0 18px 0;
+  color: var(--text);
+}
+
 /* Card */
 .card{
   background: var(--card);
@@ -96,6 +104,38 @@ body.dark{
   margin-top: 20px;
   border: 1px solid var(--border);
 }
+/* Smaller chart cards */
+.chart-card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+  width: 100%; /* Let grid control size */
+}
+
+
+.chart-card h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.chart-card canvas {
+  width: 100% !important;
+  height: 300px !important;      /* ⬆ Bigger chart area */
+}
+.chart-card:hover {
+  transform: translateY(-3px);
+  transition: .15s;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+}
+
 
 /* Form styles */
 h1,h2,h3{ margin:0 0 12px 0; }
@@ -283,7 +323,7 @@ td strong{ color:var(--text); }
   width:14px;
 }
 
-/* Dashboard cards */
+/* Dashboard cards (legacy .stats grid – kept for compatibility) */
 .stats{
   display:grid;
   grid-template-columns: repeat(3,1fr);
@@ -307,7 +347,7 @@ td strong{ color:var(--text); }
   color:var(--text);
 }
 
-/* Responsive */
+/* Responsive (tables + old .stats) */
 @media (max-width:900px){
   .form-grid{ grid-template-columns: 1fr; }
   .stats{ grid-template-columns: repeat(1,1fr); }
@@ -321,51 +361,148 @@ td strong{ color:var(--text); }
   table{ min-width:600px; }
 }
 
-/* ===========================
-   DELETE MODAL STYLES
-   =========================== */
-.modal-overlay{
+/* =====================================================
+   TRIP PREVIEW MODAL (Dashboard)
+   ===================================================== */
+
+.trip-modal-overlay {
   position: fixed;
-  inset:0;
-  background: rgba(0,0,0,0.5);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:2000;
-}
-.modal-box{
-  background: var(--card);
-  padding: 25px;
-  border-radius: 12px;
-  width: 350px;
-  border:1px solid var(--border);
-  box-shadow: var(--shadow);
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
   animation: fadeIn .2s ease;
 }
-.modal-box h3{ margin:0 0 8px 0; }
-.modal-box p{
-  margin:0 0 18px 0;
-  color:var(--muted);
+
+/* Modal Box */
+.trip-modal-box {
+  width: 600px;
+  max-height: 80vh;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  animation: slideUp .25s ease;
 }
 
-.modal-actions{
-  display:flex;
-  justify-content:space-between;
-  margin-top:10px;
+/* Header */
+.trip-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.trip-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+}
+.trip-modal-subtitle {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
 }
 
-.delete-btn{
-  background:#dc2626 !important;
-  color:#fff !important;
+/* Close button */
+.trip-modal-close {
+  font-size: 28px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: .15s;
+}
+.trip-modal-close:hover {
+  color: var(--text);
+  transform: scale(1.1);
 }
 
-@keyframes fadeIn{
-  from{ opacity:0; transform:scale(.95); }
-  to{ opacity:1; transform:scale(1); }
+/* Content Area */
+.trip-modal-body {
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 4px;
+  max-height: 65vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
+/* Single trip card inside modal */
+.trip-modal-item {
+  background: rgba(0,0,0,0.02);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  border-radius: 12px;
+  display: flex;
+  gap: 12px;
+  transition: background .15s;
+  cursor: pointer;
+}
+.trip-modal-item:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+/* Top trip summary chip */
+.trip-chip {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  opacity: 0.9;
+}
+
+.trip-chip-time {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+.trip-chip-customer {
+  background: #cffafe;
+  color: #0f766e;
+}
+.trip-chip-driver {
+  background: #fef9c3;
+  color: #8a6d00;
+}
+.trip-chip-car {
+  background: #fee2e2;
+  color: #be123c;
+}
+
+/* Text lines */
+.trip-modal-mainline {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.trip-modal-subline {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Empty state */
+.trip-modal-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* When trip modal is open, lock page scroll */
 body.modal-open{ overflow:hidden; }
 
 /* ===========================
@@ -392,20 +529,125 @@ body.modal-open{ overflow:hidden; }
   background:rgba(0,0,0,0.04);
 }
 
+/* ===========================
+   NEW DASHBOARD LAYOUT
+   =========================== */
 .stats-grid {
   display:grid;
   grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
   gap:18px;
 }
+
+/* Add spacing between the two stat rows */
+.dashboard-card .stats-grid + .stats-grid {
+  margin-top: 20px;
+}
+
+/* Override stat-card for new layout (kept separate) */
 .stat-card {
   background:var(--card);
   border-radius:12px;
   padding:16px;
   text-align:center;
   border:1px solid var(--border);
+  cursor:pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.stat-card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.08);
 }
 .stat-card h3 { font-size:14px; color:var(--muted); margin:0; }
 .stat-card p {
   font-size:22px; font-weight:800;
   margin:6px 0 0 0; color:var(--text);
+}
+
+/* pill under stat number */
+.stat-pill{
+  display:block;
+  margin-top:6px;
+  font-size:12px;
+  font-weight:600;
+  color:var(--accent);
+}
+
+/* ===========================
+   TRIP MODAL OVERLAY (Dashboard)
+   =========================== */
+.trip-modal-overlay{
+  position: fixed;
+  inset:0;
+  background: rgba(0,0,0,0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  display:none;              /* hidden by default so scroll works */
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+}
+
+/* Responsive override for stats-grid */
+@media (max-width:900px){
+  .stats-grid{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===========================
+   DASHBOARD CHART ALIGNMENT
+   =========================== */
+
+/* 2-column grid for chart cards */
+/* Always keep 2 columns for charts on desktop */
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px 32px; /* Bigger space between cards */
+  margin-top: 28px;
+  justify-items: center; /* Align inside container */
+}
+
+
+/* Smaller canvas */
+.chart-card canvas {
+  width: 100% !important;
+  height: 220px !important; /* Adjust height nicely */
+}
+
+.chart-card {
+  width: 100%;
+  max-width: 500px;  /* Prevents oversized stretching */
+  background: var(--card);
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 300px;
+}
+
+/* Mobile Responsive Fix */
+@media (max-width: 900px) {
+  .dashboard-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+  .chart-card canvas {
+    width: 100% !important;
+  height: 300px !important; /* Taller charts */
+  }
+
+
+@media (max-width: 600px) {
+  .trip-modal-box {
+    width: 90%;
+    padding: 18px;
+  }
+  .trip-modal-item {
+    flex-direction: column;
+  }
 }
