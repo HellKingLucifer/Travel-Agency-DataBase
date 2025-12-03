@@ -97,10 +97,13 @@
         <canvas id="monthlyTripsBarChart"></canvas>
       </div>
 
-      <!-- REVENUE SHARE -->
+      <!-- TRIP TYPES / MONTH -->
       <div class="chart-card">
-        <h3>Revenue Share (By Month)</h3>
-        <canvas id="revenueDoughnutChart"></canvas>
+        <h3>Trip Types Per Month</h3>
+        <p class="muted small">
+          One Way vs Round Trip for 2 months before, current month, and 2 months after.
+        </p>
+        <canvas id="tripTypeBarChart"></canvas>
       </div>
 
       <!-- MONTHLY REVENUE -->
@@ -150,7 +153,7 @@
 
   </div> <!-- /container -->
 
-  <!-- Trip Type Modal (Today / Ongoing / Upcoming) -->
+  <!-- Trip Modal (Today / Ongoing / Upcoming / TripType click) -->
   <div id="tripModalOverlay" class="trip-modal-overlay">
     <div class="trip-modal-box">
       <div class="trip-modal-header">
@@ -197,6 +200,92 @@
 
   <script>
     // =====================================================
+    // THEME HELPERS (for dark-mode adaptive charts)
+    // =====================================================
+    const dashboardCharts = [];
+
+    function isDarkMode() {
+      return document.body.classList.contains("dark") ||
+             document.documentElement.classList.contains("dark") ||
+             window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    function getChartTheme() {
+      const dark = isDarkMode();
+      return {
+        gridColor: dark ? "rgba(148,163,184,0.35)" : "rgba(148,163,184,0.35)",
+        tickColor: dark ? "#e5e7eb" : "#475569",
+        legendColor: dark ? "#e5e7eb" : "#0f172a",
+        tooltipBg: dark ? "#020617" : "#ffffff",
+        tooltipColor: dark ? "#e5e7eb" : "#020617"
+      };
+    }
+
+    function applyThemeToChart(chart) {
+      if (!chart) return;
+      const theme = getChartTheme();
+
+      if (!chart.options.plugins) chart.options.plugins = {};
+
+      // Legend text color
+      if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+        chart.options.plugins.legend.labels.color = theme.legendColor;
+      }
+
+      // Tooltip styling + purple border
+      if (!chart.options.plugins.tooltip) chart.options.plugins.tooltip = {};
+      chart.options.plugins.tooltip.backgroundColor = theme.tooltipBg;
+      chart.options.plugins.tooltip.titleColor = theme.tooltipColor;
+      chart.options.plugins.tooltip.bodyColor = theme.tooltipColor;
+      chart.options.plugins.tooltip.borderColor = "#a855f7";
+      chart.options.plugins.tooltip.borderWidth = 1;
+
+      // Axes (for bar charts)
+      if (chart.options.scales) {
+        ["x", "y", "r"].forEach((axis) => {
+          const sc = chart.options.scales[axis];
+          if (!sc) return;
+          if (!sc.grid) sc.grid = {};
+          if (!sc.ticks) sc.ticks = {};
+          sc.grid.color = theme.gridColor;
+          sc.ticks.color = theme.tickColor;
+        });
+      }
+    }
+
+    function registerChart(chart) {
+      if (chart) {
+        applyThemeToChart(chart);
+        dashboardCharts.push(chart);
+      }
+    }
+
+    function refreshChartsTheme() {
+      dashboardCharts.forEach((c) => {
+        applyThemeToChart(c);
+        c.update("none");
+      });
+    }
+
+    // Watch dark mode toggle button (if main.js toggles class)
+    window.addEventListener("load", () => {
+      const btn = document.getElementById("dark-toggle");
+      if (btn) {
+        btn.addEventListener("click", () => {
+          // allow main.js to toggle classes first
+          setTimeout(refreshChartsTheme, 0);
+        });
+      }
+
+      const mql = window.matchMedia("(prefers-color-scheme: dark)");
+      if (mql.addEventListener) {
+        mql.addEventListener("change", refreshChartsTheme);
+      } else if (mql.addListener) {
+        mql.addListener(refreshChartsTheme);
+      }
+    });
+
+    // =====================================================
     // STAT NUMBER ANIMATION
     // =====================================================
     document.querySelectorAll(".stat-value").forEach((el) => {
@@ -233,8 +322,6 @@
           datasets: [{
             data: [busyDrivers, idleDrivers, upcomingDrivers],
             backgroundColor: ["#fb3c3c", "#22c55e", "#eab308"],
-            hoverOffset: 8,
-            borderWidth: 1
           }]
         },
         options: {
@@ -253,6 +340,8 @@
           }
         }
       });
+
+      registerChart(driverPieChart);
     }
 
     // =====================================================
@@ -389,11 +478,22 @@
     })();
 
     // =====================================================
-    // TRIPS PER MONTH BAR + MONTH TRIPS MODAL HOOK
+    // DATA ARRAYS FOR MONTHLY CHARTS
     // =====================================================
     const tripsLabels = JSON.parse(`<%- JSON.stringify(stats.monthlyLabels || []) %>`);
     const tripsData   = JSON.parse(`<%- JSON.stringify(stats.monthlyTotals || []) %>`);
 
+    const typeLabels  = JSON.parse(`<%- JSON.stringify(stats.monthlyLabels || []) %>`);
+    const oneWayData  = JSON.parse(`<%- JSON.stringify(stats.monthlyOneWayTotals || []) %>`);
+    const roundData   = JSON.parse(`<%- JSON.stringify(stats.monthlyRoundTripTotals || []) %>`);
+
+    const revLabels   = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueLabels || []) %>`);
+    const revData     = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueTotals || []) %>`);
+    const revPalette  = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#f97316", "#ec4899"];
+
+    // =====================================================
+    // TRIPS PER MONTH BAR + MONTH TRIPS MODAL HOOK
+    // =====================================================
     const tripsCtx = document.getElementById("monthlyTripsBarChart");
     let tripsChart = null;
 
@@ -405,40 +505,111 @@
           datasets: [{
             label: "Trips",
             data: tripsData,
-            backgroundColor: "#6b46ff"
+            backgroundColor: "#6b46ff",
           }]
         },
         options: {
           plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true } },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          },
           animation: { duration: 1000, easing: "easeOutCubic" },
           onClick: (evt, elements) => {
             if (!elements.length) return;
             const idx = elements[0].index;
             const month = tripsLabels[idx];
-            if (month) openMonthTripsModal(month);
+            if (month && window.openMonthTripsModal) {
+              window.openMonthTripsModal(month);
+            }
           }
         }
       });
+
+      registerChart(tripsChart);
     }
 
     // =====================================================
-    // MONTHLY REVENUE BAR + REVENUE DOUGHNUT
+    // TRIP TYPES PER MONTH (STACKED BAR + CLICK → MODAL)
     // =====================================================
-    const revLabels = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueLabels || []) %>`);
-    const revData   = JSON.parse(`<%- JSON.stringify(stats.monthlyRevenueTotals || []) %>`);
-    const palette   = ["#0ea5e9", "#6366f1", "#22c55e", "#eab308", "#f97316", "#ec4899"];
+    const tripTypeCtx = document.getElementById("tripTypeBarChart");
+    let tripTypeChart = null;
 
+    if (tripTypeCtx) {
+      tripTypeChart = new Chart(tripTypeCtx, {
+        type: "bar",
+        data: {
+          labels: typeLabels,
+          datasets: [
+            {
+              label: "One Way",
+              data: oneWayData.map(v => v === 0 ? 0.2 : v),
+              backgroundColor: "#60a5fa",
+            },
+            {
+              label: "Round Trip",
+              data: roundData.map(v => v === 0 ? 0.2 : v),
+              backgroundColor: "#22c55e",
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const raw = ctx.raw;
+                  const realValue = raw < 1 ? 0 : raw;
+                  return `${ctx.dataset.label}: ${realValue}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { stacked: true },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            }
+          },
+          onClick: (evt, elements) => {
+            if (!elements.length) return;
+            const bar = elements[0];
+            const month = typeLabels[bar.index];
+            const clickedType = bar.datasetIndex === 1 ? "round_trip" : "one_way";
+            if (window.openTripTypeModal) {
+              window.openTripTypeModal(month, clickedType);
+            }
+          },
+          animation: {
+            duration: 1000,
+            easing: "easeOutCubic"
+          }
+        }
+      });
+
+      registerChart(tripTypeChart);
+    }
+
+    // =====================================================
+    // MONTHLY REVENUE BAR
+    // =====================================================
     const revBarCtx = document.getElementById("monthlyRevenueBarChart");
+    let revenueChart = null;
+
     if (revBarCtx) {
-      new Chart(revBarCtx, {
+      revenueChart = new Chart(revBarCtx, {
         type: "bar",
         data: {
           labels: revLabels,
           datasets: [{
             label: "Revenue",
             data: revData,
-            backgroundColor: revLabels.map((_, i) => palette[i % palette.length])
+            backgroundColor: revLabels.map((_, i) => revPalette[i % revPalette.length]),
           }]
         },
         options: {
@@ -447,43 +618,12 @@
           animation: { duration: 1100, easing: "easeOutCubic" }
         }
       });
-    }
 
-    const revDoughnutCtx = document.getElementById("revenueDoughnutChart");
-    if (revDoughnutCtx) {
-      new Chart(revDoughnutCtx, {
-        type: "doughnut",
-        data: {
-          labels: revLabels,
-          datasets: [{
-            data: revData,
-            backgroundColor: revLabels.map((_, i) => palette[i % palette.length]),
-            hoverOffset: 8,
-            borderWidth: 1
-          }]
-        },
-        options: {
-          plugins: {
-            legend: { position: "bottom" },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => {
-                  const total = revData.reduce((a, b) => a + b, 0) || 1;
-                  const val = ctx.raw;
-                  const percent = ((val / total) * 100).toFixed(1);
-                  const num = typeof val === "number" ? val : Number(val || 0);
-                  return `${ctx.label}: ₹${num.toFixed(2)} (${percent}%)`;
-                }
-              }
-            }
-          },
-          cutout: "55%"
-        }
-      });
+      registerChart(revenueChart);
     }
 
     // =====================================================
-    // TRIP MODALS (TODAY / ONGOING / UPCOMING)
+    // TRIP MODALS (TODAY / ONGOING / UPCOMING + TRIP TYPE)
     // =====================================================
     const todayTripsData    = JSON.parse(`<%- JSON.stringify(todayTrips || []) %>`);
     const ongoingTripsData  = JSON.parse(`<%- JSON.stringify(ongoingTrips || []) %>`);
@@ -543,10 +683,14 @@
           item.innerHTML = `
             <div style="flex:1;">
               <div class="trip-modal-mainline">
-                <span class="trip-chip trip-chip-time">
-                  Trip #${id} · ${depTime} → ${arrTime}
-                </span>
+               <span class="trip-chip trip-chip-time">
+                Trip #${id} · ${depTime} → ${arrTime}
+               </span>
+               <span class="badge ${t.trip_type === 'round_trip' ? 'badge-round' : 'badge-oneway'}">
+                ${t.trip_type === 'round_trip' ? 'Round Trip' : 'One Way'}
+               </span>
               </div>
+
               <div class="trip-modal-subline" style="margin-bottom:4px;">
                 <span class="trip-chip trip-chip-customer">Customer</span>
                 ${phoneUI(customerName, customerPhone)}
@@ -600,6 +744,31 @@
         document.body.classList.remove("modal-open");
       }
 
+      // Expose for trip-type chart
+      function openTripTypeModal(month, tripType) {
+        titleEl.textContent = tripType === "round_trip" ? "Round Trips" : "One Way Trips";
+        subtitleEl.textContent = month;
+
+        bodyEl.innerHTML = `<div class="trip-modal-empty">Loading...</div>`;
+        overlay.style.display = "flex";
+        document.body.classList.add("modal-open");
+
+        fetch(`/api/month-trips?month=${encodeURIComponent(month)}`)
+          .then(res => res.json())
+          .then(rows => {
+            const filtered = (rows || []).filter(
+              t => (t.trip_type || "").toLowerCase() === tripType
+            );
+            renderTrips(filtered);
+            subtitleEl.textContent = `${month} • Total: ${filtered.length}`;
+          })
+          .catch(() => {
+            bodyEl.innerHTML = `<div class="trip-modal-empty">Failed to load trips.</div>`;
+          });
+      }
+
+      window.openTripTypeModal = openTripTypeModal;
+
       document
         .querySelectorAll(".stat-card-click[data-trip-kind]")
         .forEach((card) => {
@@ -621,7 +790,7 @@
     })();
 
     // =====================================================
-    // MONTH TRIPS MODAL (OPENED FROM BAR CHART)
+    // MONTH TRIPS MODAL (OPENED FROM MONTHLY TRIPS BAR)
     // =====================================================
     (function () {
       const overlay  = document.getElementById("monthTripsModal");

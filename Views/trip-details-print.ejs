@@ -107,6 +107,9 @@
   <!-- PAYMENT SECTION -->
   <div class="section">
     <h3>Payment</h3>
+    <p><span class="label">Trip Type:</span>
+     <%= trip.trip_type === 'round_trip' ? 'Round Trip' : 'One Way' %>
+    </p>
 
     <p><span class="label">Fee:</span> ₹<%= Number(trip.travelling_fee).toFixed(2) %></p>
 

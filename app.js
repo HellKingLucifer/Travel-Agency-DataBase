@@ -5,7 +5,8 @@ const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const bodyParser = require("body-parser");
-const app = express();
+
+const app = express(); // <<<<<< YOU DELETED THIS — NOW RESTORED
 const PORT = 3000;
 
 // ------------------ MIDDLEWARE ------------------
@@ -15,6 +16,7 @@ app.use(bodyParser.json());
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
 
 // ------------------ DATABASE INIT ------------------
 const db = new sqlite3.Database("./travel_agency.db", (err) => {
@@ -45,6 +47,7 @@ function ensureSchema() {
       car_number TEXT,
       travelling_fee REAL NOT NULL,
       includes_toll INTEGER NOT NULL,
+      trip_type TEXT,
       created_at TEXT NOT NULL
     )`,
     (err) => {
@@ -184,30 +187,61 @@ app.get("/dashboard", (req, res) => {
                   }
 
                   db.all(
-                    `SELECT strftime('%Y-%m', departure_date) AS m,
-                            COUNT(*) AS cnt,
-                            SUM(travelling_fee) AS rev
-                     FROM trips
-                     WHERE departure_date >= ?
-                       AND departure_date <= ?
-                     GROUP BY m`,
-                    [
-                      targetMonths[0] + "-01",
-                      targetMonths[4] + "-31"
-                    ],
-                    (e6, monthlyRows) => {
-                      monthlyRows = monthlyRows || [];
-                      const map = new Map();
-                      monthlyRows.forEach((r) => map.set(r.m, r));
+  `SELECT strftime('%Y-%m', departure_date) AS m,
+          COUNT(*) AS cnt,
+          SUM(travelling_fee) AS rev,
+          SUM(
+            CASE
+              WHEN trip_type = 'round_trip' THEN 1
+              ELSE 0
+            END
+          ) AS round_trip_cnt,
+          SUM(
+            CASE
+              WHEN trip_type = 'one_way'
+                   OR trip_type IS NULL
+                   OR TRIM(trip_type) = ''
+              THEN 1
+              ELSE 0
+            END
+          ) AS one_way_cnt
+   FROM trips
+   WHERE departure_date >= ?
+     AND departure_date <= ?
+   GROUP BY m`,
+  [
+    targetMonths[0] + "-01",
+    targetMonths[4] + "-31"
+  ],
+  (e6, monthlyRows) => {
+    monthlyRows = monthlyRows || [];
+    const map = new Map();
+    monthlyRows.forEach((r) => map.set(r.m, r));
 
-                      stats.monthlyLabels = targetMonths;
-                      stats.monthlyTotals = targetMonths.map(
-                        (m) => map.get(m)?.cnt || 0
-                      );
-                      stats.monthlyRevenueLabels = targetMonths;
-                      stats.monthlyRevenueTotals = targetMonths.map(
-                        (m) => map.get(m)?.rev || 0
-                      );
+    // labels (same 2 months before, current, 2 after)
+    stats.monthlyLabels = targetMonths;
+
+    // total trips per month (existing)
+    stats.monthlyTotals = targetMonths.map(
+      (m) => (map.get(m)?.cnt) || 0
+    );
+
+    // revenue per month (existing)
+    stats.monthlyRevenueLabels = targetMonths;
+    stats.monthlyRevenueTotals = targetMonths.map(
+      (m) => (map.get(m)?.rev) || 0
+    );
+
+    // NEW: one-way vs round-trip counts per month
+    stats.monthlyOneWayTotals = targetMonths.map(
+      (m) => (map.get(m)?.one_way_cnt) || 0
+    );
+    stats.monthlyRoundTripTotals = targetMonths.map(
+      (m) => (map.get(m)?.round_trip_cnt) || 0
+    );
+
+    // ... (rest of your dashboard logic stays the same)
+
 
                       // 8) Upcoming timeline (next 6 trips)
                       db.all(
@@ -379,7 +413,8 @@ app.post("/new-trip", (req, res) => {
     driver_phone,
     car_number,
     travelling_fee,
-    toll_option
+    toll_option,
+    trip_type
   } = req.body;
 
   if (!arrival_date || !arrival_time) {
@@ -397,9 +432,9 @@ app.post("/new-trip", (req, res) => {
       departure_place, departure_date, departure_time,
       arrival_place, arrival_date, arrival_time,
       assigned_driver, assigned_car, driver_phone, car_number,
-      travelling_fee, includes_toll, created_at
+      travelling_fee, includes_toll, trip_type, created_at
     )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   db.run(
@@ -420,6 +455,7 @@ app.post("/new-trip", (req, res) => {
       car_number || "",
       Number(travelling_fee) || 0,
       includes_toll,
+      trip_type,
       created_at
     ],
     (err) => {
@@ -521,7 +557,8 @@ app.post("/trips/:id/edit", (req, res) => {
     driver_phone,
     car_number,
     travelling_fee,
-    toll_option
+    toll_option,
+    trip_type
   } = req.body;
 
   if (!arrival_date || !arrival_time) {
@@ -538,7 +575,7 @@ app.post("/trips/:id/edit", (req, res) => {
       departure_place=?, departure_date=?, departure_time=?,
       arrival_place=?, arrival_date=?, arrival_time=?,
       assigned_driver=?, assigned_car=?, driver_phone=?, car_number=?,
-      travelling_fee=?, includes_toll=?
+      travelling_fee=?, includes_toll=?, trip_type=?
      WHERE id=?`,
     [
       customer_name,
@@ -556,6 +593,7 @@ app.post("/trips/:id/edit", (req, res) => {
       car_number || "",
       Number(travelling_fee) || 0,
       includes_toll,
+      trip_type,
       req.params.id
     ],
     () => res.redirect("/trips")

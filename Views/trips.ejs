@@ -27,8 +27,8 @@
   </div>
 
   <!-- MAIN CONTENT -->
-  <div class="container">
-    <div class="card">
+  <div class="container container-trips">
+  <div class="card">
 
       <!-- TITLE + SERVER-SIDE SEARCH FORM -->
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -57,6 +57,7 @@
               <th>ID</th>
               <th>Customer</th>
               <th>Phone</th>
+              <th>Trip Type</th>
               <th>Departure</th>
               <th>Arrival</th>
               <th>Driver</th>
@@ -71,7 +72,7 @@
           <tbody>
             <% if (!trips || trips.length === 0) { %>
               <tr>
-                <td colspan="11" style="padding:20px; text-align:center;">No trips found.</td>
+                <td colspan="12" style="padding:20px; text-align:center;">No trips found.</td>
               </tr>
             <% } else { %>
               <% trips.forEach(trip => { %>
@@ -93,20 +94,33 @@
 
                   <td class="col-phone"><%= trip.phone_number %></td>
 
+                  <!-- Trip Type -->
+                  <td>
+                    <span class="badge <%= trip.trip_type === 'round_trip' ? 'badge-round' : 'badge-oneway' %>">
+                      <%= trip.trip_type === 'round_trip' ? 'Round Trip' : 'One Way' %>
+                    </span>
+                  </td>
+
+                  <!-- Departure -->
                   <td class="col-departure">
                     <div class="place">
                       <img src="/icons/departure.svg" class="inline-icon">
                       <strong><%= trip.departure_place %></strong>
                     </div>
-                    <div class="muted small"><%= trip.departure_date %> <%= trip.departure_time %></div>
+                    <div class="muted small">
+                      <%= trip.departure_date %> <%= trip.departure_time %>
+                    </div>
                   </td>
 
+                  <!-- Arrival -->
                   <td class="col-arrival">
                     <div class="place">
                       <img src="/icons/arrival.svg" class="inline-icon">
                       <strong><%= trip.arrival_place %></strong>
                     </div>
-                    <div class="muted small"><%= trip.arrival_date %> <%= trip.arrival_time %></div>
+                    <div class="muted small">
+                      <%= trip.arrival_date %> <%= trip.arrival_time %>
+                    </div>
                   </td>
 
                   <td class="col-driver"><%= trip.assigned_driver || "-" %></td>
@@ -114,6 +128,7 @@
 
                   <td class="col-fee">₹<%= Number(trip.travelling_fee).toFixed(2) %></td>
 
+                  <!-- Toll -->
                   <td class="col-toll">
                     <% if (trip.includes_toll) { %>
                       <span class="badge badge-yes">
@@ -128,6 +143,7 @@
 
                   <td class="col-created"><%= trip.created_at %></td>
 
+                  <!-- Actions -->
                   <td class="col-actions">
                     <a class="action-btn edit-btn" href="/trips/<%= trip.id %>/edit">
                       <img src="/icons/edit.svg"> <span class="btn-text">Edit</span>

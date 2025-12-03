@@ -31,6 +31,11 @@
 
       <h2>Trip Details</h2>
       <p class="muted small">Trip ID: <strong><%= trip.id %></strong></p>
+     <p class="muted small">Trip Type:
+       <span class="badge <%= trip.trip_type === 'round_trip' ? 'badge-round' : 'badge-oneway' %>">
+         <%= trip.trip_type === 'round_trip' ? 'Round Trip' : 'One Way' %>
+       </span>
+     </p>
 
       <div class="details-grid">
 

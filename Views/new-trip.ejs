@@ -1,161 +1,185 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>New Trip</title>
-  <link rel="stylesheet" href="/styles.css">
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <title>New Trip</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
 
-<body>
+  <body>
+    <!-- NAVBAR -->
+    <div class="navbar">
+      <a class="brand" href="/dashboard">
+        <img src="/logo.svg" alt="logo" style="height: 28px" />
+        <span>Travel Agency</span>
+      </a>
 
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <a class="brand" href="/dashboard">
-      <img src="/logo.svg" alt="logo" style="height:28px;">
-      <span>Travel Agency</span>
-    </a>
+      <div class="nav-links">
+        <a class="active" href="/new-trip">➕ New Trip</a>
+        <a href="/trips">📋 View Trips</a>
+        <a href="/drivers">🚗 Drivers</a>
+      </div>
 
-    <div class="nav-links">
-      <a class="active" href="/new-trip">➕ New Trip</a>
-      <a href="/trips">📋 View Trips</a>
-       <a href="/drivers">🚗 Drivers</a>
+      <div class="right-controls">
+        <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
+      </div>
     </div>
 
-    <div class="right-controls">
-      <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
+    <!-- MAIN -->
+    <div class="container">
+      <div class="card">
+        <h2>Create a New Trip</h2>
+
+        <form action="/new-trip" method="POST">
+          <!-- TRIP TYPE -->
+          <h3 style="margin-top: 10px">Trip Type</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>
+                <input type="radio" name="trip_type" value="one_way" checked />
+                One Way
+              </label>
+            </div>
+            <div class="form-row">
+              <label>
+                <input type="radio" name="trip_type" value="round_trip" /> Round
+                Trip
+              </label>
+            </div>
+          </div>
+
+          <!-- CUSTOMER -->
+          <h3 style="margin-top: 10px">Customer Details</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Customer Name</label>
+              <input type="text" name="customer_name" required />
+            </div>
+
+            <div class="form-row">
+              <label>Phone Number</label>
+              <input type="text" name="phone_number" required />
+            </div>
+
+            <div class="form-row" style="grid-column: 1 / -1">
+              <label>Customer ID</label>
+              <input type="text" name="customer_id" />
+            </div>
+          </div>
+
+          <!-- DEPARTURE -->
+          <h3 style="margin-top: 18px">Departure Details</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Departure Place</label>
+              <input type="text" name="departure_place" required />
+            </div>
+
+            <div class="form-row">
+              <label>Departure Date</label>
+              <input type="date" name="departure_date" required />
+            </div>
+
+            <div class="form-row">
+              <label>Departure Time</label>
+              <input type="time" name="departure_time" required />
+            </div>
+          </div>
+
+          <!-- ARRIVAL -->
+          <h3 style="margin-top: 18px">Arrival Details</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Arrival Place</label>
+              <input type="text" name="arrival_place" required />
+            </div>
+
+            <div class="form-row">
+              <label>Arrival Date</label>
+              <input type="date" name="arrival_date" required />
+            </div>
+
+            <div class="form-row">
+              <label>Arrival Time</label>
+              <input type="time" name="arrival_time" required />
+            </div>
+          </div>
+
+          <!-- ASSIGNMENT -->
+          <h3 style="margin-top: 18px">Assignment</h3>
+          <div class="form-grid">
+            <div class="form-row" style="position: relative">
+              <label>Assigned Driver</label>
+              <input
+                id="driver-search"
+                type="text"
+                name="assigned_driver"
+                autocomplete="off"
+                placeholder="Type driver name (or double-click to edit)"
+              />
+
+              <!-- AUTOCOMPLETE BOX -->
+              <div
+                id="driver-suggestions"
+                class="suggestions"
+                style="display: none"
+              ></div>
+            </div>
+
+            <div class="form-row">
+              <label>Assigned Car</label>
+              <input id="assigned_car" type="text" name="assigned_car" />
+            </div>
+
+            <div class="form-row">
+              <label>Driver Phone</label>
+              <input
+                id="driver_phone"
+                type="text"
+                name="driver_phone"
+                placeholder="Driver phone (auto-filled)"
+              />
+            </div>
+
+            <div class="form-row">
+              <label>Car Number</label>
+              <input
+                id="car_number"
+                type="text"
+                name="car_number"
+                placeholder="Car number (auto-filled)"
+              />
+            </div>
+          </div>
+
+          <!-- FEES -->
+          <h3 style="margin-top: 18px">Fee & Toll</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Travelling Fee</label>
+              <input type="number" step="0.01" name="travelling_fee" required />
+            </div>
+
+            <div class="form-row">
+              <label>Toll Option</label>
+              <select name="toll_option" required>
+                <option value="include">Including Toll</option>
+                <option value="exclude">Excluding Toll</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- BUTTONS -->
+          <div style="margin-top: 20px">
+            <button class="btn" type="submit">Save Trip</button>
+            <a class="btn ghost" href="/trips" style="margin-left: 10px"
+              >View Trips</a
+            >
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
 
-  <!-- MAIN -->
-  <div class="container">
-    <div class="card">
-
-      <h2>Create a New Trip</h2>
-
-      <form action="/new-trip" method="POST">
-
-        <!-- CUSTOMER -->
-        <h3 style="margin-top:10px;">Customer Details</h3>
-        <div class="form-grid">
-
-          <div class="form-row">
-            <label>Customer Name</label>
-            <input type="text" name="customer_name" required>
-          </div>
-
-          <div class="form-row">
-            <label>Phone Number</label>
-            <input type="text" name="phone_number" required>
-          </div>
-
-          <div class="form-row" style="grid-column:1 / -1;">
-            <label>Customer ID</label>
-            <input type="text" name="customer_id">
-          </div>
-
-        </div>
-
-        <!-- DEPARTURE -->
-        <h3 style="margin-top:18px;">Departure Details</h3>
-        <div class="form-grid">
-
-          <div class="form-row">
-            <label>Departure Place</label>
-            <input type="text" name="departure_place" required>
-          </div>
-
-          <div class="form-row">
-            <label>Departure Date</label>
-            <input type="date" name="departure_date" required>
-          </div>
-
-          <div class="form-row">
-            <label>Departure Time</label>
-            <input type="time" name="departure_time" required>
-          </div>
-
-        </div>
-
-        <!-- ARRIVAL -->
-        <h3 style="margin-top:18px;">Arrival Details</h3>
-        <div class="form-grid">
-
-          <div class="form-row">
-            <label>Arrival Place</label>
-            <input type="text" name="arrival_place" required>
-          </div>
-
-          <div class="form-row">
-            <label>Arrival Date</label>
-            <input type="date" name="arrival_date" required>
-          </div>
-
-          <div class="form-row">
-            <label>Arrival Time</label>
-            <input type="time" name="arrival_time" required>
-          </div>
-
-        </div>
-
-        <!-- ASSIGNMENT -->
-        <h3 style="margin-top:18px;">Assignment</h3>
-        <div class="form-grid">
-
-          <div class="form-row" style="position:relative;">
-            <label>Assigned Driver</label>
-            <input id="driver-search" type="text" name="assigned_driver" autocomplete="off"
-                   placeholder="Type driver name (or double-click to edit)">
-
-            <!-- AUTOCOMPLETE BOX -->
-            <div id="driver-suggestions" class="suggestions" style="display:none;"></div>
-          </div>
-
-          <div class="form-row">
-            <label>Assigned Car</label>
-            <input id="assigned_car" type="text" name="assigned_car">
-          </div>
-
-          <div class="form-row">
-            <label>Driver Phone</label>
-           <input id="driver_phone" type="text" name="driver_phone" placeholder="Driver phone (auto-filled)">
-          </div>
-
-          <div class="form-row">
-            <label>Car Number</label>
-            <input id="car_number" type="text" name="car_number" placeholder="Car number (auto-filled)">
-          </div>
-
-        </div>
-
-        <!-- FEES -->
-        <h3 style="margin-top:18px;">Fee & Toll</h3>
-        <div class="form-grid">
-
-          <div class="form-row">
-            <label>Travelling Fee</label>
-            <input type="number" step="0.01" name="travelling_fee" required>
-          </div>
-
-          <div class="form-row">
-            <label>Toll Option</label>
-            <select name="toll_option" required>
-              <option value="include">Including Toll</option>
-              <option value="exclude">Excluding Toll</option>
-            </select>
-          </div>
-
-        </div>
-
-        <!-- BUTTONS -->
-        <div style="margin-top:20px;">
-          <button class="btn" type="submit">Save Trip</button>
-          <a class="btn ghost" href="/trips" style="margin-left:10px;">View Trips</a>
-        </div>
-
-      </form>
-    </div>
-  </div>
-
-  <script src="/main.js"></script>
-</body>
+    <script src="/main.js"></script>
+  </body>
 </html>

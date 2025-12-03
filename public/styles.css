@@ -38,7 +38,14 @@ body.dark{
   margin: 24px auto;
   padding: 0 20px 60px;
 }
-
+.container-trips {
+  max-width: 1400px;   /* try 1300–1500 if you want more/less */
+}
+@media (max-width: 1200px) {
+  .container-trips {
+    max-width: 100%;
+  }
+}
 /* Navbar */
 .navbar{
   height:64px;
@@ -51,7 +58,7 @@ body.dark{
   position: sticky;
   top:0;
   z-index: 40;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
 }
 .brand{
   display:flex;
@@ -102,40 +109,38 @@ body.dark{
   padding: 28px;
   box-shadow: var(--shadow);
   margin-top: 20px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
 }
+
 /* Smaller chart cards */
 .chart-card {
   background: var(--card);
   border-radius: 14px;
   padding: 18px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 200px;
-  width: 100%; /* Let grid control size */
+  min-height: 300px;
+  width: 100%;         /* Let grid control size */
+  max-width: 500px;    /* Prevents oversized stretching */
 }
-
-
 .chart-card h3 {
   margin: 0;
   color: var(--text);
   font-size: 16px;
   font-weight: 700;
 }
-
 .chart-card canvas {
   width: 100% !important;
-  height: 300px !important;      /* ⬆ Bigger chart area */
+  height: 300px !important;
 }
 .chart-card:hover {
   transform: translateY(-3px);
   transition: .15s;
   box-shadow: 0 10px 28px rgba(0,0,0,0.08);
 }
-
 
 /* Form styles */
 h1,h2,h3{ margin:0 0 12px 0; }
@@ -149,8 +154,18 @@ h1,h2,h3{ margin:0 0 12px 0; }
   flex-direction:column;
   position:relative;
 }
-label{ font-weight:700; margin-bottom:6px; color:var(--muted); font-size:14px; }
-input[type="text"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
+label{
+  font-weight:700;
+  margin-bottom:6px;
+  color:var(--muted);
+  font-size:14px;
+}
+input[type="text"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+select,
+textarea {
   padding:12px 14px;
   border-radius:10px;
   border: 1px solid var(--border);
@@ -209,16 +224,14 @@ input:focus, select:focus, textarea:focus {
 
 /* Table container */
 .table-wrap{
-  margin-top:18px;
-  overflow:auto;
+  margin-top: 18px;
   border-radius: 10px;
-  border:1px solid var(--border);
+  border: 1px solid var(--border);
   background: var(--card);
 }
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:900px;
 }
 thead th{
   text-align:left;
@@ -226,6 +239,7 @@ thead th{
   background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent);
   position:sticky;
   top:0;
+  z-index: 1;
 }
 
 tbody tr{
@@ -256,13 +270,15 @@ td strong{ color:var(--text); }
   align-items:center;
   gap:6px;
 }
-
 .inline-icon{
   width:14px;
   opacity:0.85;
 }
 
 /* fee styling */
+.col-fee {
+  text-align: right;
+}
 .col-fee .fee{
   font-weight:800;
   color:var(--text);
@@ -298,6 +314,24 @@ td strong{ color:var(--text); }
   opacity:0.9;
 }
 
+/* Trip type badges */
+.badge-oneway {
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.badge-round {
+  background: #dcfce7;
+  color: #047857;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
 /* action buttons */
 .action-btn{
   padding:6px 10px;
@@ -308,6 +342,7 @@ td strong{ color:var(--text); }
   display:inline-flex;
   align-items:center;
   gap:6px;
+  white-space: nowrap;      /* keep icon + text on one line */
 }
 .edit-btn{
   background:#fff7ed;
@@ -321,6 +356,14 @@ td strong{ color:var(--text); }
 }
 .action-btn img{
   width:14px;
+}
+
+/* Actions column layout */
+.col-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:8px;
 }
 
 /* Dashboard cards (legacy .stats grid – kept for compatibility) */
@@ -351,14 +394,18 @@ td strong{ color:var(--text); }
 @media (max-width:900px){
   .form-grid{ grid-template-columns: 1fr; }
   .stats{ grid-template-columns: repeat(1,1fr); }
-  table{ min-width:700px; }
 }
 @media (max-width:600px){
   .navbar{ padding: 0 12px; box-shadow:none; }
   .brand span{ display:none; }
   .right-controls .btn-text{ display:none; }
   .container{ padding:0 12px; }
-  table{ min-width:600px; }
+
+  /* stack actions on very small screens */
+  .col-actions{
+    flex-direction:column;
+    align-items:flex-end;
+  }
 }
 
 /* =====================================================
@@ -438,16 +485,17 @@ td strong{ color:var(--text); }
 /* Single trip card inside modal */
 .trip-modal-item {
   background: rgba(0,0,0,0.02);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   padding: 14px 16px;
   border-radius: 12px;
   display: flex;
   gap: 12px;
-  transition: background .15s;
+  transition: background .15s, border-color .15s;
   cursor: pointer;
 }
 .trip-modal-item:hover {
   background: rgba(0,0,0,0.04);
+  border-color: var(--accent-2);
 }
 
 /* Top trip summary chip */
@@ -458,7 +506,6 @@ td strong{ color:var(--text); }
   border-radius: 6px;
   opacity: 0.9;
 }
-
 .trip-chip-time {
   background: #e0e7ff;
   color: #4338ca;
@@ -482,6 +529,10 @@ td strong{ color:var(--text); }
   font-weight: 700;
   margin-bottom: 6px;
   color: var(--text);
+  display:flex;           /* chip + trip type on same row */
+  align-items:center;
+  gap:8px;               /* space between time chip & type badge */
+  flex-wrap:wrap;
 }
 .trip-modal-subline {
   font-size: 13px;
@@ -549,13 +600,14 @@ body.modal-open{ overflow:hidden; }
   border-radius:12px;
   padding:16px;
   text-align:center;
-  border:1px solid var(--border);
+  border:2px solid var(--border);
   cursor:pointer;
-  transition: transform .15s, box-shadow .15s;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
 }
 .stat-card:hover{
   transform: translateY(-4px);
   box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+  border-color: var(--accent);
 }
 .stat-card h3 { font-size:14px; color:var(--muted); margin:0; }
 .stat-card p {
@@ -573,49 +625,16 @@ body.modal-open{ overflow:hidden; }
 }
 
 /* ===========================
-   TRIP MODAL OVERLAY (Dashboard)
-   =========================== */
-
-/* Responsive override for stats-grid */
-@media (max-width:900px){
-  .stats-grid{
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ===========================
    DASHBOARD CHART ALIGNMENT
    =========================== */
 
 /* 2-column grid for chart cards */
-/* Always keep 2 columns for charts on desktop */
 .dashboard-charts {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 32px 32px; /* Bigger space between cards */
+  gap: 32px 32px;
   margin-top: 28px;
-  justify-items: center; /* Align inside container */
-}
-
-
-/* Smaller canvas */
-.chart-card canvas {
-  width: 100% !important;
-  height: 220px !important; /* Adjust height nicely */
-}
-
-.chart-card {
-  width: 100%;
-  max-width: 500px;  /* Prevents oversized stretching */
-  background: var(--card);
-  border-radius: 14px;
-  padding: 18px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 300px;
+  justify-items: center;
 }
 
 /* Mobile Responsive Fix */
@@ -624,12 +643,6 @@ body.modal-open{ overflow:hidden; }
     grid-template-columns: 1fr;
   }
 }
-
-  .chart-card canvas {
-    width: 100% !important;
-  height: 300px !important; /* Taller charts */
-  }
-
 
 @media (max-width: 600px) {
   .trip-modal-box {
@@ -641,51 +654,25 @@ body.modal-open{ overflow:hidden; }
   }
 }
 
-/* === Stronger borders for all cards === */
-.card,
-.chart-card,
-.stat-card,
+/* === Stronger borders for timeline card as well === */
 .timeline-card {
   border: 2px solid var(--border);
 }
 
-/* Optional: Accent border highlight on hover */
-.stat-card:hover,
-.chart-card:hover,
-.timeline-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 10px 28px rgba(107,70,255,0.15);
-}
-
-/* For trip modal cards inside modal */
-.trip-modal-item {
-  border: 2px solid var(--border);
-}
-.trip-modal-item:hover {
-  border-color: var(--accent-2);
-}
-
-/* Add border to navbar for header separation */
-.navbar {
-  border-bottom: 2px solid var(--border);
-}
-
+/* WhatsApp / call links */
 .wa-link {
   color: var(--accent-2);
   font-weight: 700;
   text-decoration: underline;
 }
-
 .wa-link:hover {
   opacity: .8;
 }
-
 .call-link {
   font-weight: 700;
   color: var(--text);
   margin-right: 6px;
 }
-
 .wa-icon {
   font-size: 18px;
   vertical-align: middle;
@@ -693,11 +680,12 @@ body.modal-open{ overflow:hidden; }
   cursor: pointer;
   text-decoration: none;
 }
-
 .wa-icon:hover {
   transform: scale(1.15);
   opacity: 0.85;
 }
+
+/* Driver status badges */
 .driver-status-badge {
   padding: 4px 8px;
   border-radius: 6px;
@@ -725,7 +713,42 @@ body.modal-open{ overflow:hidden; }
   color:var(--muted);
   border:1px solid var(--border);
 }
+
 .route-line {
   font-weight:600;
   color:var(--text);
 }
+
+/* Upcoming Trips timeline styling */
+.timeline-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.timeline-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);  /* divider between trips */
+}
+.timeline-item:last-child {
+  border-bottom: none;
+}
+.timeline-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;                                 /* spacing inside each trip */
+}
+
+/* HOVER EFFECT FOR CHART CARDS */
+/* Default chart card style */
+.chart-card {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  transition: border-color 0.18s ease;
+  padding: 16px;
+}
+
+/* Hover border — same purple as trip card hover (#6b46ff) */
+.chart-card:hover {
+  border-color: #6b46ff;
+}
+

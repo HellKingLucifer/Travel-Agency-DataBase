@@ -33,6 +33,21 @@
 
       <form action="/trips/<%= trip.id %>/edit" method="POST">
 
+        <!-- TRIP TYPE -->
+        <h3 style="margin-top:10px;">Trip Type</h3>
+        <div class="form-grid">
+            <div class="form-row">
+                <label>
+                    <input type="radio" name="trip_type" value="one_way" <%= trip.trip_type === 'one_way' ? 'checked' : '' %>> One Way
+                </label>
+            </div>
+            <div class="form-row">
+                <label>
+                    <input type="radio" name="trip_type" value="round_trip" <%= trip.trip_type === 'round_trip' ? 'checked' : '' %>> Round Trip
+                </label>
+            </div>
+        </div>
+
         <!-- CUSTOMER -->
         <h3 style="margin-top:10px;">Customer Details</h3>
         <div class="form-grid">
