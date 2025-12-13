@@ -57,6 +57,7 @@
               <th>ID</th>
               <th>Customer</th>
               <th>Phone</th>
+              <th>Referral</th>
               <th>Trip Type</th>
               <th>Departure</th>
               <th>Arrival</th>
@@ -72,7 +73,7 @@
           <tbody>
             <% if (!trips || trips.length === 0) { %>
               <tr>
-                <td colspan="12" style="padding:20px; text-align:center;">No trips found.</td>
+                <td colspan="13" style="padding:20px; text-align:center;">No trips found.</td>
               </tr>
             <% } else { %>
               <% trips.forEach(trip => { %>
@@ -93,6 +94,14 @@
                   </td>
 
                   <td class="col-phone"><%= trip.phone_number %></td>
+                  
+                  <td class="col-referral">
+                    <% if (trip.referal) { %>
+                      <a href="/referral/<%= trip.referal %>" class="link-referral"><%= trip.referal %></a>
+                    <% } else { %>
+                      -
+                    <% } %>
+                  </td>
 
                   <!-- Trip Type -->
                   <td>

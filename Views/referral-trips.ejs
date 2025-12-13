@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Trips for <%= referralName %></title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <a class="brand" href="/dashboard">
+      <img src="/icons/dashboard.svg" alt="logo" style="height:26px;">
+      <span>Travel Agency</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/new-trip">➕ New Trip</a>
+      <a class="active" href="/trips">📋 View Trips</a>
+      <a href="/drivers">🚗 Drivers</a>
+    </div>
+
+    <div class="right-controls">
+      <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="container">
+    <div class="card">
+      <h2>Trips for <%= referralName %></h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Departure</th>
+              <th>Arrival</th>
+              <th>Fee</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!trips || trips.length === 0) { %>
+              <tr>
+                <td colspan="7" style="padding:20px; text-align:center;">No trips found for this referral.</td>
+              </tr>
+            <% } else { %>
+              <% trips.forEach(trip => { %>
+                <tr>
+                  <td class="col-id"><a href="/trips/<%= trip.id %>" class="link-id"><strong><%= trip.id %></strong></a></td>
+                  <td class="col-customer"><%= trip.customer_name %></td>
+                  <td class="col-phone"><%= trip.phone_number %></td>
+                  <td class="col-departure">
+                    <div class="place">
+                      <img src="/icons/departure.svg" class="inline-icon">
+                      <strong><%= trip.departure_place %></strong>
+                    </div>
+                    <div class="muted small"><%= trip.departure_date %> <%= trip.departure_time %></div>
+                  </td>
+                  <td class="col-arrival">
+                    <div class="place">
+                      <img src="/icons/arrival.svg" class="inline-icon">
+                      <strong><%= trip.arrival_place %></strong>
+                    </div>
+                    <div class="muted small"><%= trip.arrival_date %> <%= trip.arrival_time %></div>
+                  </td>
+                  <td class="col-fee">₹<%= Number(trip.travelling_fee).toFixed(2) %></td>
+                  <td class="col-created"><%= trip.created_at %></td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <a class="btn ghost" href="/trips" style="margin-top: 20px;">⬅ Back to All Trips</a>
+    </div>
+  </div>
+  <script src="/main.js"></script>
+</body>
+</html>

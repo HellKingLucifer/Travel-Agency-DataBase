@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", path.join(__dirname, "Views"));
 
 
 // ------------------ DATABASE INIT ------------------
@@ -35,6 +35,7 @@ function ensureSchema() {
       customer_name TEXT NOT NULL,
       phone_number TEXT NOT NULL,
       customer_id TEXT,
+      referal TEXT,
       departure_place TEXT NOT NULL,
       departure_date TEXT NOT NULL,
       departure_time TEXT NOT NULL,
@@ -125,10 +126,11 @@ app.get("/dashboard", (req, res) => {
 
               // 5) Driver status using trips
               db.all(
-                `SELECT *
-                 FROM trips
-                 WHERE assigned_driver IS NOT NULL
-                   AND TRIM(assigned_driver) != ''`,
+              `SELECT *
+              FROM trips
+              WHERE assigned_driver IS NOT NULL
+              AND TRIM(assigned_driver) != ''`,
+
                 [],
                 (e5, tripsForDrivers) => {
                   tripsForDrivers = tripsForDrivers || [];
@@ -402,6 +404,7 @@ app.post("/new-trip", (req, res) => {
     customer_name,
     phone_number,
     customer_id,
+    referal,
     departure_place,
     departure_date,
     departure_time,
@@ -428,13 +431,13 @@ app.post("/new-trip", (req, res) => {
 
   const sql = `
     INSERT INTO trips (
-      customer_name, phone_number, customer_id,
+      customer_name, phone_number, customer_id, referal,
       departure_place, departure_date, departure_time,
       arrival_place, arrival_date, arrival_time,
       assigned_driver, assigned_car, driver_phone, car_number,
       travelling_fee, includes_toll, trip_type, created_at
     )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   db.run(
@@ -443,6 +446,7 @@ app.post("/new-trip", (req, res) => {
       customer_name,
       phone_number,
       customer_id || "",
+      referal || "",
       departure_place,
       departure_date,
       departure_time,
@@ -518,6 +522,22 @@ app.get("/trips", (req, res) => {
   });
 });
 
+// ------------------ REFERRAL TRIPS ------------------
+app.get("/referral/:referralName", (req, res) => {
+  const referralName = req.params.referralName;
+  const sql = "SELECT * FROM trips WHERE referal = ? ORDER BY created_at DESC";
+
+  db.all(sql, [referralName], (err, trips) => {
+    if (err) {
+      return res.status(500).send("DB Error");
+    }
+    res.render("referral-trips", {
+      trips,
+      referralName,
+    });
+  });
+});
+
 // ------------------ TRIP DETAILS ------------------
 app.get("/trips/:id", (req, res) => {
   db.get("SELECT * FROM trips WHERE id=?", [req.params.id], (err, trip) => {
@@ -546,6 +566,7 @@ app.post("/trips/:id/edit", (req, res) => {
     customer_name,
     phone_number,
     customer_id,
+    referal,
     departure_place,
     departure_date,
     departure_time,
@@ -571,7 +592,7 @@ app.post("/trips/:id/edit", (req, res) => {
 
   db.run(
     `UPDATE trips SET
-      customer_name=?, phone_number=?, customer_id=?,
+      customer_name=?, phone_number=?, customer_id=?, referal=?,
       departure_place=?, departure_date=?, departure_time=?,
       arrival_place=?, arrival_date=?, arrival_time=?,
       assigned_driver=?, assigned_car=?, driver_phone=?, car_number=?,
@@ -581,6 +602,7 @@ app.post("/trips/:id/edit", (req, res) => {
       customer_name,
       phone_number,
       customer_id || "",
+      referal || "",
       departure_place,
       departure_date,
       departure_time,
@@ -712,8 +734,9 @@ app.get("/export/csv", (req, res) => {
               if (v === null || v === undefined) v = "";
               v = String(v);
               if (v.includes(",") || v.includes('"')) {
-                v = `"${v.replace(/"/g, '""')}"`;
+               v = `"${v.replace(/"/g, '""')}"`;
               }
+
               return v;
             })
             .join(",")
