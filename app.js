@@ -715,7 +715,7 @@ app.post("/drivers/:id/delete", (req, res) => {
       console.error("Delete Driver Error:", err);
       return res.status(500).send("Failed to delete driver.");
     }
-    res.sendStatus(200);
+    res.redirect("/drivers");
   });
 });
 
@@ -749,15 +749,16 @@ app.get("/export/csv", (req, res) => {
         .map((row) =>
           fields
             .map((f) => {
-              let v = row[f];
-              if (v === null || v === undefined) v = "";
-              v = String(v);
-              if (v.includes(",") || v.includes('"')) {
-                v = `"${v.replace(/"/g, '""')}"`;
+             let v = row[f];
+             if (v === null || v === undefined) v = "";
+             v = String(v);
 
-              }
+             if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+             v = `"${v.replace(/"/g, '""')}"`;
+            }
 
-              return v;
+            return v;
+
             })
             .join(",")
         )

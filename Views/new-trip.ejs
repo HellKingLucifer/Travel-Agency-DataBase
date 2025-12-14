@@ -220,7 +220,7 @@
 
         driverPaymentStatus.addEventListener('change', function () {
           if (this.value === 'paid') {
-            paymentMethodDiv.style.display = 'block';
+            paymentMethodDiv.style.display = 'flex';
             paymentMethodSelect.setAttribute('required', 'required');
           } else {
             paymentMethodDiv.style.display = 'none';

@@ -55,9 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   const modal = document.getElementById("deleteModal");
   const cancelBtn = document.getElementById("cancelDelete");
-  const confirmForm = document.getElementById("confirmDeleteForm");
-
-  if (modal && confirmForm) {
+  
+  if (modal) {
     let entityId = null;
     let entityType = "trip";
 
@@ -122,6 +121,7 @@ if (confirmBtn) {
       })
       .finally(closeModal);
   });
+}
 }
 
 
@@ -199,4 +199,4 @@ if (confirmBtn) {
     }
   });
 })();
-  }});
+  });
