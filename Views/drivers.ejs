@@ -109,22 +109,21 @@
           </tbody>
         </table>
       </div>
-
     </div>
   </div>
 
   <!-- DELETE CONFIRMATION MODAL -->
-  <div id="deleteModal" class="modal-overlay" style="display:none;">
-    <div class="modal-box">
+  <div id="deleteModal" class="trip-modal-overlay" style="display:none;">
+    <div class="trip-modal-box" style="width: 400px; max-width: 90%;">
       <h3>Delete Driver</h3>
       <p>This action cannot be undone.</p>
 
-      <div class="modal-actions">
-        <button id="cancelDelete" class="btn ghost">Cancel</button>
-        <form id="confirmDeleteForm" method="POST">
-          <button class="btn delete-btn" type="submit">Delete</button>
-        </form>
-      </div>
+      <form id="confirmDeleteForm" method="POST" style="width: 100%;">
+        <div class="modal-actions">
+          <button id="cancelDelete" type="button" class="btn ghost">Cancel</button>
+          <button class="btn del-btn" type="submit">Delete</button>
+        </div>
+      </form>
     </div>
   </div>
 

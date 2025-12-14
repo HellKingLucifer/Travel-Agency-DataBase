@@ -1,6 +1,8 @@
 // main.js - client UI utilities
 document.addEventListener("DOMContentLoaded", () => {
-  // ========== DARK MODE ==========
+  // =========================
+  // DARK MODE
+  // =========================
   const body = document.body;
   const saved = localStorage.getItem("dms_dark");
   if (saved === "1") body.classList.add("dark");
@@ -16,7 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ========== CLIENT TABLE SEARCH (optional extra) ==========
+  // =========================
+  // CLIENT TABLE SEARCH
+  // =========================
   const searchInput = document.getElementById("table-search");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -29,7 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ========== FILTER TOLL INCLUDED ==========
+  // =========================
+  // FILTER TOLL INCLUDED
+  // =========================
   const tollFilter = document.getElementById("filter-toll");
   if (tollFilter) {
     tollFilter.addEventListener("change", () => {
@@ -58,8 +64,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Open modal
     document.querySelectorAll(".open-delete-modal").forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        entityId = e.currentTarget.getAttribute("data-id");
-        entityType = e.currentTarget.getAttribute("data-entity") || "trip";
+        entityId = e.currentTarget.dataset.id;
+        entityType = e.currentTarget.dataset.entity || "trip";
+
         modal.style.display = "flex";
         document.body.classList.add("modal-open");
       });
@@ -73,46 +80,50 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     if (cancelBtn) {
-      cancelBtn.addEventListener("click", closeModal);
+      cancelBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeModal();
+      });
     }
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && modal.style.display === "flex") {
         closeModal();
       }
     });
 
-    // Handle form submission
-    confirmForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!entityId) return;
+    // Handle delete (AJAX)
+    const confirmBtn = document.getElementById("confirmDeleteBtn");
 
-      const url =
-        entityType === "driver"
-          ? `/drivers/${entityId}/delete`
-          : `/trips/${entityId}/delete`;
-      
-      const redirectUrl = entityType === 'driver' ? '/drivers' : '/trips';
+if (confirmBtn) {
+  confirmBtn.addEventListener("click", () => {
+    if (!entityId) return;
 
-      fetch(url, {
-        method: "POST",
-      })
+    const url =
+      entityType === "driver"
+        ? `/drivers/${entityId}/delete`
+        : `/trips/${entityId}/delete`;
+
+    const redirectUrl =
+      entityType === "driver" ? "/drivers" : "/trips";
+
+    fetch(url, { method: "POST" })
       .then((res) => {
-          if (res.ok) {
-            window.location.href = redirectUrl;
-          } else {
-            alert("Delete failed!");
-          }
-        })
-        .catch((err) => {
-          console.error("Delete error:", err);
-          alert("An error occurred during deletion.");
-        })
-        .finally(() => {
-          closeModal();
-        });
-    });
-  }
-});
+        if (!res.ok) throw new Error("Delete failed");
+        window.location.href = redirectUrl;
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Delete failed. Please try again.");
+      })
+      .finally(closeModal);
+  });
+}
+
 
 // =========================
 // DRIVER AUTOCOMPLETE
@@ -175,15 +186,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
           suggestionsBox.style.display = "block";
         })
-        .catch(() => clearSuggestions());
+        .catch(clearSuggestions);
     }, 150);
   });
 
   driverInput.addEventListener("dblclick", unlockDriverInput);
 
   document.addEventListener("click", (e) => {
-    if (!driverInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+    if (!driverInput.contains(e.target) &&
+        !suggestionsBox.contains(e.target)) {
       clearSuggestions();
     }
   });
 })();
+  }});

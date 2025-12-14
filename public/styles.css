@@ -889,3 +889,10 @@ body.modal-open {
 .chart-card:hover {
   border-color: #6b46ff;
 }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}

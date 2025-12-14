@@ -640,7 +640,7 @@ app.post("/trips/:id/delete", (req, res) => {
       console.error("Delete Trip Error:", err);
       return res.status(500).send("Failed to delete trip.");
     }
-    res.redirect("/trips");
+    res.sendStatus(200);
   });
 });
 
@@ -710,9 +710,13 @@ app.post("/drivers/:id/edit", (req, res) => {
 
 // Delete driver
 app.post("/drivers/:id/delete", (req, res) => {
-  db.run("DELETE FROM drivers WHERE id=?", [req.params.id], () =>
-    res.redirect("/drivers")
-  );
+  db.run("DELETE FROM drivers WHERE id=?", [req.params.id], (err) => {
+    if (err) {
+      console.error("Delete Driver Error:", err);
+      return res.status(500).send("Failed to delete driver.");
+    }
+    res.sendStatus(200);
+  });
 });
 
 // ------------------ AUTOCOMPLETE API ------------------
@@ -750,6 +754,7 @@ app.get("/export/csv", (req, res) => {
               v = String(v);
               if (v.includes(",") || v.includes('"')) {
                 v = `"${v.replace(/"/g, '""')}"`;
+
               }
 
               return v;
