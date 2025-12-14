@@ -6,7 +6,7 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const bodyParser = require("body-parser");
 
-const app = express(); // <<<<<< YOU DELETED THIS — NOW RESTORED
+const app = express();
 const PORT = 3000;
 
 // ------------------ MIDDLEWARE ------------------
@@ -472,7 +472,7 @@ app.post("/new-trip", (req, res) => {
       if (err) {
         console.error("Insert Trip Error:", err);
         return res.send(
-          `<script>alert('Database insert failed!'); window.history.back();</script>`
+          `<script>alert('Database insert failed! Error: ${err.message}'); window.history.back();</script>`
         );
       }
       res.redirect("/trips");
@@ -715,7 +715,7 @@ app.post("/drivers/:id/delete", (req, res) => {
       console.error("Delete Driver Error:", err);
       return res.status(500).send("Failed to delete driver.");
     }
-    res.redirect("/drivers");
+    res.sendStatus(200);
   });
 });
 
@@ -754,7 +754,7 @@ app.get("/export/csv", (req, res) => {
              v = String(v);
 
              if (v.includes(",") || v.includes('"') || v.includes("\n")) {
-             v = `"${v.replace(/"/g, '""')}"`;
+                v = `"${v.replace(/"/g, '""')}"`;
             }
 
             return v;

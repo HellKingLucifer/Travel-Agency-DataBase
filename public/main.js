@@ -1,5 +1,12 @@
 // main.js - client UI utilities
-document.addEventListener("DOMContentLoaded", () => {
+console.log("🔥 main.js executing");
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".open-delete-modal")) {
+    console.log("🟢 Delete button CLICK detected", e.target.closest(".open-delete-modal"));
+  }
+});
+
   // =========================
   // DARK MODE
   // =========================
@@ -199,4 +206,4 @@ if (confirmBtn) {
     }
   });
 })();
-  });
+ 
