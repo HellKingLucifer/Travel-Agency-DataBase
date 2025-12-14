@@ -85,6 +85,11 @@
           <h3>Payment</h3>
           <p><strong>Fee:</strong> ₹<%= Number(trip.travelling_fee).toFixed(2) %></p>
 
+          <p><strong>Driver Payment:</strong> <%= trip.driver_payment_status %></p>
+          <% if (trip.driver_payment_status) { %>
+            <p><strong>Payment Method:</strong> <%= trip.payment_method %></p>
+          <% } %>
+
           <% if (trip.includes_toll) { %>
             <span class="badge badge-yes">
               <img class="badge-icon" src="/icons/toll.svg">

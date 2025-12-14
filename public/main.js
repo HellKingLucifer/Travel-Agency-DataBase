@@ -43,50 +43,80 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
-});
 
-// ==========================
-// DELETE CONFIRMATION MODAL
-// ==========================
-const modal = document.getElementById("deleteModal");
-const cancelBtn = document.getElementById("cancelDelete");
-const confirmForm = document.getElementById("confirmDeleteForm");
+  // =========================
+  // DELETE CONFIRMATION MODAL
+  // =========================
+  const modal = document.getElementById("deleteModal");
+  const cancelBtn = document.getElementById("cancelDelete");
+  const confirmForm = document.getElementById("confirmDeleteForm");
 
-if (modal && confirmForm) {
-  document.querySelectorAll(".open-delete-modal").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-id");
-      const entity = btn.getAttribute("data-entity") || "trip";
+  if (modal && confirmForm) {
+    let entityId = null;
+    let entityType = "trip";
 
-      if (entity === "driver") {
-        confirmForm.action = `/drivers/${id}/delete`;
-      } else {
-        confirmForm.action = `/trips/${id}/delete`;
-      }
-
-      modal.style.display = "flex";
-      document.body.classList.add("modal-open");
+    // Open modal
+    document.querySelectorAll(".open-delete-modal").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        entityId = e.currentTarget.getAttribute("data-id");
+        entityType = e.currentTarget.getAttribute("data-entity") || "trip";
+        modal.style.display = "flex";
+        document.body.classList.add("modal-open");
+      });
     });
-  });
 
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
+    // Close modal
+    const closeModal = () => {
       modal.style.display = "none";
       document.body.classList.remove("modal-open");
+      entityId = null;
+    };
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", closeModal);
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.style.display === "flex") {
+        closeModal();
+      }
+    });
+
+    // Handle form submission
+    confirmForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!entityId) return;
+
+      const url =
+        entityType === "driver"
+          ? `/drivers/${entityId}/delete`
+          : `/trips/${entityId}/delete`;
+      
+      const redirectUrl = entityType === 'driver' ? '/drivers' : '/trips';
+
+      fetch(url, {
+        method: "POST",
+      })
+      .then((res) => {
+          if (res.ok) {
+            window.location.href = redirectUrl;
+          } else {
+            alert("Delete failed!");
+          }
+        })
+        .catch((err) => {
+          console.error("Delete error:", err);
+          alert("An error occurred during deletion.");
+        })
+        .finally(() => {
+          closeModal();
+        });
     });
   }
+});
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.style.display === "flex") {
-      modal.style.display = "none";
-      document.body.classList.remove("modal-open");
-    }
-  });
-}
-
-// ==========================
+// =========================
 // DRIVER AUTOCOMPLETE
-// ==========================
+// =========================
 (function () {
   const driverInput = document.getElementById("driver-search");
   const suggestionsBox = document.getElementById("driver-suggestions");

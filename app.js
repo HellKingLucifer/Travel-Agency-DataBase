@@ -49,6 +49,8 @@ function ensureSchema() {
       travelling_fee REAL NOT NULL,
       includes_toll INTEGER NOT NULL,
       trip_type TEXT,
+      driver_payment_status TEXT,
+      payment_method TEXT,
       created_at TEXT NOT NULL
     )`,
     (err) => {
@@ -126,7 +128,7 @@ app.get("/dashboard", (req, res) => {
 
               // 5) Driver status using trips
               db.all(
-              `SELECT *
+                `SELECT *
               FROM trips
               WHERE assigned_driver IS NOT NULL
               AND TRIM(assigned_driver) != ''`,
@@ -189,7 +191,7 @@ app.get("/dashboard", (req, res) => {
                   }
 
                   db.all(
-  `SELECT strftime('%Y-%m', departure_date) AS m,
+                    `SELECT strftime('%Y-%m', departure_date) AS m,
           COUNT(*) AS cnt,
           SUM(travelling_fee) AS rev,
           SUM(
@@ -211,38 +213,38 @@ app.get("/dashboard", (req, res) => {
    WHERE departure_date >= ?
      AND departure_date <= ?
    GROUP BY m`,
-  [
-    targetMonths[0] + "-01",
-    targetMonths[4] + "-31"
-  ],
-  (e6, monthlyRows) => {
-    monthlyRows = monthlyRows || [];
-    const map = new Map();
-    monthlyRows.forEach((r) => map.set(r.m, r));
+                    [
+                      targetMonths[0] + "-01",
+                      targetMonths[4] + "-31"
+                    ],
+                    (e6, monthlyRows) => {
+                      monthlyRows = monthlyRows || [];
+                      const map = new Map();
+                      monthlyRows.forEach((r) => map.set(r.m, r));
 
-    // labels (same 2 months before, current, 2 after)
-    stats.monthlyLabels = targetMonths;
+                      // labels (same 2 months before, current, 2 after)
+                      stats.monthlyLabels = targetMonths;
 
-    // total trips per month (existing)
-    stats.monthlyTotals = targetMonths.map(
-      (m) => (map.get(m)?.cnt) || 0
-    );
+                      // total trips per month (existing)
+                      stats.monthlyTotals = targetMonths.map(
+                        (m) => (map.get(m)?.cnt) || 0
+                      );
 
-    // revenue per month (existing)
-    stats.monthlyRevenueLabels = targetMonths;
-    stats.monthlyRevenueTotals = targetMonths.map(
-      (m) => (map.get(m)?.rev) || 0
-    );
+                      // revenue per month (existing)
+                      stats.monthlyRevenueLabels = targetMonths;
+                      stats.monthlyRevenueTotals = targetMonths.map(
+                        (m) => (map.get(m)?.rev) || 0
+                      );
 
-    // NEW: one-way vs round-trip counts per month
-    stats.monthlyOneWayTotals = targetMonths.map(
-      (m) => (map.get(m)?.one_way_cnt) || 0
-    );
-    stats.monthlyRoundTripTotals = targetMonths.map(
-      (m) => (map.get(m)?.round_trip_cnt) || 0
-    );
+                      // NEW: one-way vs round-trip counts per month
+                      stats.monthlyOneWayTotals = targetMonths.map(
+                        (m) => (map.get(m)?.one_way_cnt) || 0
+                      );
+                      stats.monthlyRoundTripTotals = targetMonths.map(
+                        (m) => (map.get(m)?.round_trip_cnt) || 0
+                      );
 
-    // ... (rest of your dashboard logic stays the same)
+                      // ... (rest of your dashboard logic stays the same)
 
 
                       // 8) Upcoming timeline (next 6 trips)
@@ -309,10 +311,10 @@ app.get("/dashboard", (req, res) => {
                                         if (
                                           !currentTrip ||
                                           arr <
-                                            makeDate(
-                                              currentTrip.arrival_date,
-                                              currentTrip.arrival_time
-                                            )
+                                          makeDate(
+                                            currentTrip.arrival_date,
+                                            currentTrip.arrival_time
+                                          )
                                         ) {
                                           currentTrip = t;
                                         }
@@ -321,10 +323,10 @@ app.get("/dashboard", (req, res) => {
                                         if (
                                           !upcomingTrip ||
                                           dep <
-                                            makeDate(
-                                              upcomingTrip.departure_date,
-                                              upcomingTrip.departure_time
-                                            )
+                                          makeDate(
+                                            upcomingTrip.departure_date,
+                                            upcomingTrip.departure_time
+                                          )
                                         ) {
                                           upcomingTrip = t;
                                         }
@@ -417,7 +419,9 @@ app.post("/new-trip", (req, res) => {
     car_number,
     travelling_fee,
     toll_option,
-    trip_type
+    trip_type,
+    driver_payment_status,
+    payment_method
   } = req.body;
 
   if (!arrival_date || !arrival_time) {
@@ -435,9 +439,9 @@ app.post("/new-trip", (req, res) => {
       departure_place, departure_date, departure_time,
       arrival_place, arrival_date, arrival_time,
       assigned_driver, assigned_car, driver_phone, car_number,
-      travelling_fee, includes_toll, trip_type, created_at
+      travelling_fee, includes_toll, trip_type, created_at, driver_payment_status, payment_method
     )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   db.run(
@@ -460,7 +464,9 @@ app.post("/new-trip", (req, res) => {
       Number(travelling_fee) || 0,
       includes_toll,
       trip_type,
-      created_at
+      created_at,
+      driver_payment_status,
+      payment_method
     ],
     (err) => {
       if (err) {
@@ -579,7 +585,9 @@ app.post("/trips/:id/edit", (req, res) => {
     car_number,
     travelling_fee,
     toll_option,
-    trip_type
+    trip_type,
+    driver_payment_status,
+    payment_method
   } = req.body;
 
   if (!arrival_date || !arrival_time) {
@@ -596,7 +604,8 @@ app.post("/trips/:id/edit", (req, res) => {
       departure_place=?, departure_date=?, departure_time=?,
       arrival_place=?, arrival_date=?, arrival_time=?,
       assigned_driver=?, assigned_car=?, driver_phone=?, car_number=?,
-      travelling_fee=?, includes_toll=?, trip_type=?
+      travelling_fee=?, includes_toll=?, trip_type=?,
+      driver_payment_status=?, payment_method=?
      WHERE id=?`,
     [
       customer_name,
@@ -616,6 +625,8 @@ app.post("/trips/:id/edit", (req, res) => {
       Number(travelling_fee) || 0,
       includes_toll,
       trip_type,
+      driver_payment_status,
+      payment_method,
       req.params.id
     ],
     () => res.redirect("/trips")
@@ -624,7 +635,11 @@ app.post("/trips/:id/edit", (req, res) => {
 
 // ------------------ DELETE TRIP ------------------
 app.post("/trips/:id/delete", (req, res) => {
-  db.run("DELETE FROM trips WHERE id=?", [req.params.id], () => {
+  db.run("DELETE FROM trips WHERE id=?", [req.params.id], (err) => {
+    if (err) {
+      console.error("Delete Trip Error:", err);
+      return res.status(500).send("Failed to delete trip.");
+    }
     res.redirect("/trips");
   });
 });
@@ -734,7 +749,7 @@ app.get("/export/csv", (req, res) => {
               if (v === null || v === undefined) v = "";
               v = String(v);
               if (v.includes(",") || v.includes('"')) {
-               v = `"${v.replace(/"/g, '""')}"`;
+                v = `"${v.replace(/"/g, '""')}"`;
               }
 
               return v;
@@ -771,7 +786,7 @@ app.get("/api/month-trips", (req, res) => {
     }
   );
 });
- 
+
 // ------------------ START SERVER ------------------
 app.listen(PORT, () => {
   console.log(`🚀 Server running → http://localhost:${PORT}`);

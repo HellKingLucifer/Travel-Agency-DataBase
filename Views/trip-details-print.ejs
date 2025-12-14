@@ -116,6 +116,11 @@
 
     <p><span class="label">Fee:</span> ₹<%= Number(trip.travelling_fee).toFixed(2) %></p>
 
+    <p><span class="label">Driver Payment:</span> <%= trip.driver_payment_status %></p>
+    <% if (trip.driver_payment_status) { %>
+      <p><span class="label">Payment Method:</span> <%= trip.payment_method %></p>
+    <% } %>
+
     <% if (trip.includes_toll) { %>
       <span class="badge badge-yes">Toll Included</span>
     <% } else { %>

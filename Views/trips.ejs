@@ -65,6 +65,7 @@
               <th>Car</th>
               <th>Fee</th>
               <th>Toll</th>
+              <th>Driver Payment</th>
               <th>Created</th>
               <th>Actions</th>
             </tr>
@@ -73,7 +74,7 @@
           <tbody>
             <% if (!trips || trips.length === 0) { %>
               <tr>
-                <td colspan="13" style="padding:20px; text-align:center;">No trips found.</td>
+                <td colspan="14" style="padding:20px; text-align:center;">No trips found.</td>
               </tr>
             <% } else { %>
               <% trips.forEach(trip => { %>
@@ -147,6 +148,15 @@
                       <span class="badge badge-no">
                         <img src="/icons/toll.svg" class="badge-icon"> No
                       </span>
+                    <% } %>
+                  </td>
+
+                  <!-- Driver Payment -->
+                  <td class="col-driver-payment">
+                    <% if (trip.driver_payment_status === 'paid') { %>
+                      <span class="badge badge-yes">Paid</span>
+                    <% } else { %>
+                      <span class="badge badge-no">Not Paid</span>
                     <% } %>
                   </td>
 
