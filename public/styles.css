@@ -2,10 +2,10 @@
 :root {
   --bg: #f5f7fa;
   --card: #fff;
-  --muted: #6b7280;
+  --muted: #6b7280;       /* general muted */
+  --muted-text: #334155; /* dashboard text (stronger) */
   --text: #111827;
   --accent: #6b46ff;
-  /* purple accent */
   --accent-2: #0076ff;
   --border: #e6eef6;
   --shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
@@ -35,10 +35,12 @@ body.dark {
   --bg: #000000;
   --card: #1a1a1a;
   --muted: #9aa7bf;
+  --muted-text: #94a3b8; /* 👈 softer for dark mode */
   --text: #e6eef6;
   --border: rgba(255, 255, 255, 0.08);
   --shadow: 0 6px 20px rgba(255, 255, 255, 0.04);
 }
+
 
 /* Container */
 .container {
@@ -269,6 +271,7 @@ textarea:focus {
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--card);
+  overflow-x: auto;
 }
 
 table {
@@ -299,6 +302,8 @@ th {
   border-top: 1px solid var(--border);
   font-size: 14px;
   color: var(--muted);
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 td strong {
@@ -896,3 +901,25 @@ body.modal-open {
   gap: 12px;
   margin-top: 24px;
 }
+/* Default (light mode) */
+:root {
+  --muted-text: #334155;   /* slate-700 */
+}
+
+/* Dark mode */
+.dark {
+  --muted-text: #94a3b8;   /* slate-400 */
+}
+
+/* Apply */
+.muted {
+  color: var(--muted-text);
+}
+/* FORCE dashboard muted text contrast */
+p.muted,
+span.muted,
+div.muted {
+  color: var(--muted-text) !important;
+}
+
+
