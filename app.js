@@ -35,7 +35,7 @@ function ensureSchema() {
       customer_name TEXT NOT NULL,
       phone_number TEXT NOT NULL,
       customer_id TEXT,
-      referal TEXT,
+      referral TEXT,
       departure_place TEXT NOT NULL,
       departure_date TEXT NOT NULL,
       departure_time TEXT NOT NULL,
@@ -406,7 +406,7 @@ app.post("/new-trip", (req, res) => {
     customer_name,
     phone_number,
     customer_id,
-    referal,
+    referral,
     departure_place,
     departure_date,
     departure_time,
@@ -435,7 +435,7 @@ app.post("/new-trip", (req, res) => {
 
   const sql = `
     INSERT INTO trips (
-      customer_name, phone_number, customer_id, referal,
+      customer_name, phone_number, customer_id, referral,
       departure_place, departure_date, departure_time,
       arrival_place, arrival_date, arrival_time,
       assigned_driver, assigned_car, driver_phone, car_number,
@@ -450,7 +450,7 @@ app.post("/new-trip", (req, res) => {
       customer_name,
       phone_number,
       customer_id || "",
-      referal || "",
+      referral || "",
       departure_place,
       departure_date,
       departure_time,
@@ -496,6 +496,7 @@ app.get("/trips", (req, res) => {
        OR assigned_driver LIKE ?
        OR departure_place LIKE ?
        OR arrival_place LIKE ?
+       OR referral LIKE ?
   `;
 
   const dataSql = `
@@ -506,11 +507,12 @@ app.get("/trips", (req, res) => {
        OR assigned_driver LIKE ?
        OR departure_place LIKE ?
        OR arrival_place LIKE ?
+       OR referral LIKE ?
     ORDER BY created_at DESC
     LIMIT ? OFFSET ?
   `;
 
-  const params = [like, like, like, like, like];
+  const params = [like, like, like, like, like, like];
 
   db.get(countSql, params, (err, row) => {
     const total = row?.total || 0;
@@ -531,7 +533,7 @@ app.get("/trips", (req, res) => {
 // ------------------ REFERRAL TRIPS ------------------
 app.get("/referral/:referralName", (req, res) => {
   const referralName = req.params.referralName;
-  const sql = "SELECT * FROM trips WHERE referal = ? ORDER BY created_at DESC";
+  const sql = "SELECT * FROM trips WHERE referral = ? ORDER BY created_at DESC";
 
   db.all(sql, [referralName], (err, trips) => {
     if (err) {
@@ -572,7 +574,7 @@ app.post("/trips/:id/edit", (req, res) => {
     customer_name,
     phone_number,
     customer_id,
-    referal,
+    referral,
     departure_place,
     departure_date,
     departure_time,
@@ -600,7 +602,7 @@ app.post("/trips/:id/edit", (req, res) => {
 
   db.run(
     `UPDATE trips SET
-      customer_name=?, phone_number=?, customer_id=?, referal=?,
+      customer_name=?, phone_number=?, customer_id=?, referral=?,
       departure_place=?, departure_date=?, departure_time=?,
       arrival_place=?, arrival_date=?, arrival_time=?,
       assigned_driver=?, assigned_car=?, driver_phone=?, car_number=?,
@@ -611,7 +613,7 @@ app.post("/trips/:id/edit", (req, res) => {
       customer_name,
       phone_number,
       customer_id || "",
-      referal || "",
+      referral || "",
       departure_place,
       departure_date,
       departure_time,

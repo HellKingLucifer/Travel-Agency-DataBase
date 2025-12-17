@@ -61,9 +61,14 @@
             <input type="text" name="phone_number" value="<%= trip.phone_number %>" required>
           </div>
 
-          <div class="form-row" style="grid-column:1 / -1;">
+          <div class="form-row">
             <label>Customer ID</label>
             <input type="text" name="customer_id" value="<%= trip.customer_id %>">
+          </div>
+
+          <div class="form-row">
+            <label>Referral</label>
+            <input type="text" name="referral" value="<%= trip.referral %>">
           </div>
         </div>
 
@@ -136,7 +141,7 @@
           </div>
         </div>
 
-        <!-- FEE -->
+        <!-- FEE & TOLL -->
         <h3 style="margin-top:20px;">Fee & Toll</h3>
         <div class="form-grid">
           <div class="form-row">
@@ -153,6 +158,27 @@
           </div>
         </div>
 
+        <!-- PAYMENT -->
+        <h3 style="margin-top:20px;">Payment</h3>
+        <div class="form-grid">
+       <div class="form-row">
+       <label>Driver's Payment Status</label>
+       <select name="driver_payment_status" id="driver_payment_status">
+       <option value="Unpaid" <%= trip.driver_payment_status === 'Unpaid' || !trip.driver_payment_status ? 'selected' : '' %>>Not paid</option>
+       <option value="Paid" <%= trip.driver_payment_status === 'Paid' ? 'selected' : '' %>>Paid</option>
+       </select>
+       </div>
+
+       <div class="form-row" id="payment_method_container">
+       <label>Payment Method</label>
+       <select name="payment_method">
+       <option value="Cash" <%= trip.payment_method === 'Cash' ? 'selected' : '' %>>Cash</option>
+       <option value="Online" <%= trip.payment_method === 'Online' ? 'selected' : '' %>>Online</option>
+       </select>
+       </div>
+       </div>
+
+
         <!-- BUTTONS -->
         <div style="margin-top:20px;">
           <button class="btn" type="submit">Update Trip</button>
@@ -164,5 +190,23 @@
   </div>
 
   <script src="/main.js"></script>
+  <script>
+  const paymentStatusEl = document.getElementById('driver_payment_status');
+  const paymentMethodContainerEl = document.getElementById('payment_method_container');
+
+  function updatePaymentMethodVisibility() {
+    if (paymentStatusEl.value === 'Paid') {
+      paymentMethodContainerEl.style.display = 'block';
+    } else {
+      paymentMethodContainerEl.style.display = 'none';
+    }
+  }
+
+  // Initial state on page load
+  updatePaymentMethodVisibility();
+
+  paymentStatusEl.addEventListener('change', updatePaymentMethodVisibility);
+</script>
+
 </body>
 </html>

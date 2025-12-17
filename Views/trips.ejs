@@ -97,8 +97,8 @@
                   <td class="col-phone"><%= trip.phone_number %></td>
                   
                   <td class="col-referral">
-                    <% if (trip.referal) { %>
-                      <a href="/referral/<%= trip.referal %>" class="link-referral"><%= trip.referal %></a>
+                    <% if (trip.referral) { %>
+                      <a href="/referral/<%= trip.referral %>" class="link-referral"><%= trip.referral %></a>
                     <% } else { %>
                       -
                     <% } %>
@@ -153,7 +153,7 @@
 
                   <!-- Driver Payment -->
                   <td class="col-driver-payment">
-                    <% if (trip.driver_payment_status === 'paid') { %>
+                    <% if (trip.driver_payment_status === 'Paid') { %>
                       <span class="badge badge-yes">Paid</span>
                     <% } else { %>
                       <span class="badge badge-no">Not Paid</span>
