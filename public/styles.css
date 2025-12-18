@@ -233,6 +233,10 @@ textarea:focus {
   box-shadow: 0 6px 18px rgba(107, 70, 255, 0.14);
 }
 
+a.btn {
+  text-decoration: none;
+}
+
 .btn.ghost {
   background: transparent;
   border: 1px solid var(--border);
@@ -781,7 +785,7 @@ body.modal-open {
 .wa-link {
   color: var(--accent-2);
   font-weight: 700;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .wa-link:hover {

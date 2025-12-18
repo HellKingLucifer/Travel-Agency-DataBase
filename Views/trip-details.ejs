@@ -9,7 +9,6 @@
 
   <!-- NAVBAR -->
   <div class="navbar">
-    <a href="javascript:history.back()" class="btn ghost" style="margin-right: 15px;">⬅ Back</a>
     <a class="brand" href="/dashboard">
        <img src="/logo.svg" alt="logo" style="height: 28px" />
       <span>Travel Agency</span>
@@ -30,7 +29,10 @@
   <div class="container">
     <div class="card">
 
-      <h2>Trip Details</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Trip Details</h2>
+        <a href="javascript:history.back()" class="btn ghost">⬅ Back</a>
+      </div>
       <p class="muted small">Trip ID: <strong><%= trip.id %></strong></p>
      <p class="muted small">Trip Type:
        <span class="badge <%= trip.trip_type === 'round_trip' ? 'badge-round' : 'badge-oneway' %>">
@@ -153,4 +155,3 @@
     }
   });
 </script>
-

@@ -9,7 +9,6 @@
   <body>
     <!-- NAVBAR -->
     <div class="navbar">
-      <a href="/drivers" class="btn ghost" style="margin-right: 15px">⬅ Back</a>
       <a class="brand" href="/dashboard">
         <img src="/logo.svg" alt="logo" style="height: 28px" />
         <span>Travel Agency</span>
@@ -28,7 +27,16 @@
     <!-- MAIN -->
     <div class="container">
       <div class="card">
-        <h2>Add New Driver</h2>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <h2>Add New Driver</h2>
+          <a href="javascript:history.back()" class="btn ghost">⬅ Back</a>
+        </div>
 
         <form action="/drivers/new" method="POST" style="margin-top: 14px">
           <div class="form-grid">
