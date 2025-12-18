@@ -38,7 +38,12 @@
           <a href="javascript:history.back()" class="btn ghost">⬅ Back</a>
         </div>
 
-        <form action="/drivers/new" method="POST" style="margin-top: 14px">
+        <form
+          action="/drivers/new"
+          method="POST"
+          enctype="multipart/form-data"
+          style="margin-top: 14px"
+        >
           <div class="form-grid">
             <div class="form-row">
               <label>Name</label>
@@ -65,6 +70,82 @@
               <input type="text" name="license" />
             </div>
 
+            <div class="form-row">
+              <label>Driver's License Image</label>
+              <input
+                type="file"
+                name="license_image"
+                onchange="previewImage('license_image_preview', this)"
+                required
+              />
+              <img
+                id="license_image_preview"
+                src="#"
+                alt="Selected Image"
+                style="max-width: 200px; display: none"
+              />
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Front) (Optional)</label>
+              <input
+                type="file"
+                name="car_image_front"
+                onchange="previewImage('car_image_front_preview', this)"
+              />
+              <img
+                id="car_image_front_preview"
+                src="#"
+                alt="Selected Image"
+                style="max-width: 200px; display: none"
+              />
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Back) (Optional)</label>
+              <input
+                type="file"
+                name="car_image_back"
+                onchange="previewImage('car_image_back_preview', this)"
+              />
+              <img
+                id="car_image_back_preview"
+                src="#"
+                alt="Selected Image"
+                style="max-width: 200px; display: none"
+              />
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Left) (Optional)</label>
+              <input
+                type="file"
+                name="car_image_left"
+                onchange="previewImage('car_image_left_preview', this)"
+              />
+              <img
+                id="car_image_left_preview"
+                src="#"
+                alt="Selected Image"
+                style="max-width: 200px; display: none"
+              />
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Right) (Optional)</label>
+              <input
+                type="file"
+                name="car_image_right"
+                onchange="previewImage('car_image_right_preview', this)"
+              />
+              <img
+                id="car_image_right_preview"
+                src="#"
+                alt="Selected Image"
+                style="max-width: 200px; display: none"
+              />
+            </div>
+
             <div class="form-row" style="grid-column: 1 / -1">
               <label>Notes</label>
               <textarea name="notes" style="height: 80px"></textarea>
@@ -89,4 +170,16 @@
       window.location.reload();
     }
   });
+
+  function previewImage(imgId, input) {
+    const img = document.getElementById(imgId);
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        img.src = e.target.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
 </script>

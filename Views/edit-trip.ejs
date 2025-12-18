@@ -1,217 +1,168 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Edit Trip</title>
-  <link rel="stylesheet" href="/styles.css">
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <title>Edit Driver</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
 
-<body>
+  <body>
+    <!-- NAVBAR -->
+    <div class="navbar">
+      <a class="brand" href="/dashboard">
+        <img src="/logo.svg" alt="logo" style="height: 28px" />
+        <span>Travel Agency</span>
+      </a>
 
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <a class="brand" href="/dashboard">
-      <img src="/logo.svg" alt="logo" style="height: 28px" />
-      <span>Travel Agency</span>
-    </a>
-
-    <div class="nav-links">
-      <a href="/new-trip">➕ New Trip</a>
-      <a class="active" href="/trips">📋 View Trips</a>
-      <a href="/drivers">🚗 Drivers</a>
-    </div>
-
-    <div class="right-controls">
-      <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="container">
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>Edit Trip — #<%= trip.id %></h2>
-        <a href="javascript:history.back()" class="btn ghost">⬅ Back</a>
+      <div class="nav-links">
+        <a href="/drivers" class="active">🚗 Drivers</a>
       </div>
 
-      <form action="/trips/<%= trip.id %>/edit" method="POST">
-
-        <!-- TRIP TYPE -->
-        <h3 style="margin-top:10px;">Trip Type</h3>
-        <div class="form-grid">
-            <div class="form-row">
-                <label>
-                    <input type="radio" name="trip_type" value="one_way" <%= trip.trip_type === 'one_way' ? 'checked' : '' %>> One Way
-                </label>
-            </div>
-            <div class="form-row">
-                <label>
-                    <input type="radio" name="trip_type" value="round_trip" <%= trip.trip_type === 'round_trip' ? 'checked' : '' %>> Round Trip
-                </label>
-            </div>
-        </div>
-
-        <!-- CUSTOMER -->
-        <h3 style="margin-top:10px;">Customer Details</h3>
-        <div class="form-grid">
-          <div class="form-row">
-            <label>Customer Name</label>
-            <input type="text" name="customer_name" value="<%= trip.customer_name %>" required>
-          </div>
-
-          <div class="form-row">
-            <label>Phone Number</label>
-            <input type="text" name="phone_number" value="<%= trip.phone_number %>" required>
-          </div>
-
-          <div class="form-row">
-            <label>Customer ID</label>
-            <input type="text" name="customer_id" value="<%= trip.customer_id %>">
-          </div>
-
-          <div class="form-row">
-            <label>Referral</label>
-            <input type="text" name="referral" value="<%= trip.referral %>">
-          </div>
-        </div>
-
-        <!-- DEPARTURE -->
-        <h3 style="margin-top:20px;">Departure Details</h3>
-        <div class="form-grid">
-          <div class="form-row">
-            <label>Departure Place</label>
-            <input type="text" name="departure_place" value="<%= trip.departure_place %>" required>
-          </div>
-
-          <div class="form-row">
-            <label>Departure Date</label>
-            <input type="date" name="departure_date" value="<%= trip.departure_date %>" required>
-          </div>
-
-          <div class="form-row">
-            <label>Departure Time</label>
-            <input type="time" name="departure_time" value="<%= trip.departure_time %>" required>
-          </div>
-        </div>
-
-        <!-- ARRIVAL -->
-        <h3 style="margin-top:20px;">Arrival Details</h3>
-        <div class="form-grid">
-          <div class="form-row">
-            <label>Arrival Place</label>
-            <input type="text" name="arrival_place" value="<%= trip.arrival_place %>" required>
-          </div>
-
-          <div class="form-row">
-            <label>Arrival Date</label>
-            <input type="date" name="arrival_date" value="<%= trip.arrival_date %>" required>
-          </div>
-
-          <div class="form-row">
-            <label>Arrival Time</label>
-            <input type="time" name="arrival_time" value="<%= trip.arrival_time %>" required>
-          </div>
-        </div>
-
-        <!-- ASSIGNMENT -->
-        <h3 style="margin-top:20px;">Assignment</h3>
-        <div class="form-grid">
-          <div class="form-row" style="position:relative;">
-            <label>Assigned Driver</label>
-            <input
-              id="driver-search"
-              type="text"
-              name="assigned_driver"
-              autocomplete="off"
-              placeholder="Type driver name..."
-              value="<%= trip.assigned_driver %>">
-            <div id="driver-suggestions" class="suggestions" style="display:none;"></div>
-          </div>
-
-          <div class="form-row">
-            <label>Assigned Car</label>
-            <input id="assigned_car" type="text" name="assigned_car" value="<%= trip.assigned_car %>">
-          </div>
-
-          <div class="form-row">
-            <label>Driver Phone</label>
-            <input id="driver_phone" type="text" name="driver_phone" value="<%= trip.driver_phone %>">
-          </div>
-
-          <div class="form-row">
-            <label>Car Number</label>
-            <input id="car_number" type="text" name="car_number" value="<%= trip.car_number %>">
-          </div>
-        </div>
-
-        <!-- FEE & TOLL -->
-        <h3 style="margin-top:20px;">Fee & Toll</h3>
-        <div class="form-grid">
-          <div class="form-row">
-            <label>Travelling Fee</label>
-            <input type="number" step="0.01" name="travelling_fee" value="<%= trip.travelling_fee %>" required>
-          </div>
-
-          <div class="form-row">
-            <label>Toll Option</label>
-            <select name="toll_option" required>
-              <option value="include" <%= trip.includes_toll ? "selected" : "" %>>Including Toll</option>
-              <option value="exclude" <%= !trip.includes_toll ? "selected" : "" %>>Excluding Toll</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- PAYMENT -->
-        <h3 style="margin-top:20px;">Payment</h3>
-        <div class="form-grid">
-       <div class="form-row">
-       <label>Driver's Payment Status</label>
-       <select name="driver_payment_status" id="driver_payment_status">
-       <option value="Unpaid" <%= trip.driver_payment_status === 'Unpaid' || !trip.driver_payment_status ? 'selected' : '' %>>Not paid</option>
-       <option value="Paid" <%= trip.driver_payment_status === 'Paid' ? 'selected' : '' %>>Paid</option>
-       </select>
-       </div>
-
-       <div class="form-row" id="payment_method_container">
-       <label>Payment Method</label>
-       <select name="payment_method">
-       <option value="Cash" <%= trip.payment_method === 'Cash' ? 'selected' : '' %>>Cash</option>
-       <option value="Online" <%= trip.payment_method === 'Online' ? 'selected' : '' %>>Online</option>
-       </select>
-       </div>
-       </div>
-
-
-        <!-- BUTTONS -->
-        <div style="margin-top:20px;">
-          <button class="btn" type="submit">Update Trip</button>
-        </div>
-
-      </form>
+      <div class="right-controls">
+        <button id="dark-toggle" class="btn ghost">Toggle Dark</button>
+      </div>
     </div>
-  </div>
 
-  <script src="/main.js"></script>
-  <script>
-  const paymentStatusEl = document.getElementById('driver_payment_status');
-  const paymentMethodContainerEl = document.getElementById('payment_method_container');
+    <!-- MAIN -->
+    <div class="container">
+      <div class="card">
+        <h2>Edit Driver — <%= driver.name %></h2>
 
-  function updatePaymentMethodVisibility() {
-    if (paymentStatusEl.value === 'Paid') {
-      paymentMethodContainerEl.style.display = 'block';
-    } else {
-      paymentMethodContainerEl.style.display = 'none';
-    }
-  }
+        <form
+          action="/drivers/<%= driver.id %>/edit"
+          method="POST"
+          style="margin-top: 14px"
+          enctype="multipart/form-data"
+        >
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Name</label>
+              <input
+                type="text"
+                name="name"
+                value="<%= driver.name %>"
+                required
+              />
+            </div>
 
-  // Initial state on page load
-  updatePaymentMethodVisibility();
+            <div class="form-row">
+              <label>Phone</label>
+              <input type="text" name="phone" value="<%= driver.phone %>" />
+            </div>
 
-  paymentStatusEl.addEventListener('change', updatePaymentMethodVisibility);
-</script>
+            <div class="form-row">
+              <label>Car</label>
+              <input type="text" name="car" value="<%= driver.car %>" />
+            </div>
 
-</body>
+            <div class="form-row">
+              <label>Car Number</label>
+              <input
+                type="text"
+                name="car_number"
+                value="<%= driver.car_number %>"
+              />
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Front)</label>
+              <input type="file" name="car_image_front" />
+            </div>
+
+            <% if (driver.car_image_front) { %>
+            <div class="form-row" style="grid-column: 1 / -1">
+              <label>Current Car Image (Front)</label>
+              <img
+                src="/uploads/<%= driver.car_image_front %>"
+                alt="car-image-front"
+                style="max-width: 250px"
+              />
+            </div>
+            <% } %>
+
+            <div class="form-row">
+              <label>Car Image (Back)</label>
+              <input type="file" name="car_image_back" />
+            </div>
+
+            <% if (driver.car_image_back) { %>
+            <div class="form-row" style="grid-column: 1 / -1">
+              <label>Current Car Image (Back)</label>
+              <img
+                src="/uploads/<%= driver.car_image_back %>"
+                alt="car-image-back"
+                style="max-width: 250px"
+              />
+            </div>
+            <% } %>
+
+            <div class="form-row">
+              <label>Car Image (Left)</label>
+              <input type="file" name="car_image_left" />
+            </div>
+
+            <% if (driver.car_image_left) { %>
+            <div class="form-row" style="grid-column: 1 / -1">
+              <label>Current Car Image (Left)</label>
+              <img
+                src="/uploads/<%= driver.car_image_left %>"
+                alt="car-image-left"
+                style="max-width: 250px"
+              />
+            </div>
+            <% } %>
+
+            <div class="form-row">
+              <label>Car Image (Right)</label>
+              <input type="file" name="car_image_right" />
+            </div>
+
+            <% if (driver.car_image_right) { %>
+            <div class="form-row" style="grid-column: 1 / -1">
+              <label>Current Car Image (Right)</label>
+              <img
+                src="/uploads/<%= driver.car_image_right %>"
+                alt="car-image-right"
+                style="max-width: 250px"
+              />
+            </div>
+            <% } %>
+
+            <div class="form-row">
+              <label>License Image</label>
+              <input type="file" name="license_image" />
+            </div>
+
+            <% if (driver.license_image) { %>
+            <div class="form-row" style="grid-column: 1 / -1">
+              <label>Current License Image</label>
+              <img
+                src="/uploads/<%= driver.license_image %>"
+                alt="license-image"
+                style="max-width: 250px"
+              />
+            </div>
+            <% } %>
+
+            <div class="form-row" style="grid-column: 1 / -1">
+              <label>Notes</label>
+              <textarea name="notes" style="min-height: 90px"><%= driver.notes %></textarea>
+            </div>
+          </div>
+
+          <!-- BUTTONS -->
+          <div style="margin-top: 18px">
+            <button class="btn" type="submit">Update Driver</button>
+            <a class="btn ghost" href="/drivers" style="margin-left: 10px">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="/main.js"></script>
+  </body>
 </html>
+
 <script>
   window.addEventListener("pageshow", function (event) {
     if (event.persisted) {

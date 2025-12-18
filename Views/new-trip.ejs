@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -30,7 +31,7 @@
       <div class="card">
         <h2>Create a New Trip</h2>
 
-        <form action="/new-trip" method="POST">
+        <form action="/new-trip" method="POST" enctype="multipart/form-data">
           <!-- TRIP TYPE -->
           <h3 style="margin-top: 10px">Trip Type</h3>
           <div class="form-grid">
@@ -99,6 +100,8 @@
               <input type="text" name="arrival_place" required />
             </div>
 
+
+
             <div class="form-row">
               <label>Arrival Date</label>
               <input type="date" name="arrival_date" required />
@@ -155,6 +158,30 @@
                 placeholder="Car number (auto-filled)"
               />
             </div>
+            <div class="form-row">
+              <label>Driver's License Image</label>
+              <img id="license_image_preview" src="#" alt="License Image" style="max-width: 200px; display: none;"/>
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Front)</label>
+              <img id="car_image_front_preview" src="#" alt="Car Image (Front)" style="max-width: 200px; display: none;"/>
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Back)</label>
+              <img id="car_image_back_preview" src="#" alt="Car Image (Back)" style="max-width: 200px; display: none;"/>
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Left)</label>
+              <img id="car_image_left_preview" src="#" alt="Car Image (Left)" style="max-width: 200px; display: none;"/>
+            </div>
+
+            <div class="form-row">
+              <label>Car Image (Right)</label>
+              <img id="car_image_right_preview" src="#" alt="Car Image (Right)" style="max-width: 200px; display: none;"/>
+            </div>
           </div>
 
           <!-- FEES -->
@@ -185,7 +212,7 @@
                 required
               >
                 <option value="not_paid" selected>Not Paid</option>
-                <option value="paid">Paid</option>
+                <.option value="paid">Paid</option>
               </select>
             </div>
 
@@ -229,21 +256,38 @@
           }
         });
       });
-    </script>
-    <script>
+
       window.addEventListener('pageshow', function (event) {
         if (event.persisted) {
           window.location.reload();
         }
       });
+
+      // Updates the driver info when a suggestion is clicked
+      function updateDriverInfo(driver) {
+        document.getElementById('driver-search').value = driver.name;
+        document.getElementById('assigned_car').value = driver.car;
+        document.getElementById('driver_phone').value = driver.phone;
+        document.getElementById('car_number').value = driver.car_number;
+
+        // Update image previews
+        updateImagePreview('license_image_preview', driver.license_image);
+        updateImagePreview('car_image_front_preview', driver.car_image_front);
+        updateImagePreview('car_image_back_preview', driver.car_image_back);
+        updateImagePreview('car_image_left_preview', driver.car_image_left);
+        updateImagePreview('car_image_right_preview', driver.car_image_right);
+      }
+
+      function updateImagePreview(imgId, imagePath) {
+        const img = document.getElementById(imgId);
+        if (imagePath) {
+          img.src = '/uploads/' + imagePath;
+          img.style.display = 'block';
+        } else {
+          img.src = '#';
+          img.style.display = 'none';
+        }
+      }
     </script>
   </body>
 </html>
-
-<script>
-  window.addEventListener('pageshow', function (event) {
-    if (event.persisted) {
-      window.location.reload();
-    }
-  });
-</script>

@@ -5,6 +5,7 @@ const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const bodyParser = require("body-parser");
+const multer = require("multer");
 
 const app = express();
 const PORT = 3000;
@@ -23,6 +24,17 @@ app.use(bodyParser.json());
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "Views"));
 
+// ------------------ MULTER CONFIG ------------------
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // ------------------ DATABASE INIT ------------------
 const db = new sqlite3.Database("./travel_agency.db", (err) => {
@@ -73,6 +85,11 @@ function ensureSchema() {
       car_number TEXT,
       license TEXT,
       notes TEXT,
+      license_image TEXT,
+      car_image_front TEXT,
+      car_image_back TEXT,
+      car_image_left TEXT,
+      car_image_right TEXT,
       created_at TEXT NOT NULL
     )`,
     (err) => {
@@ -684,13 +701,25 @@ app.get("/drivers", (req, res) => {
 app.get("/drivers/new", (req, res) => res.render("new-driver"));
 
 // Add new driver
-app.post("/drivers/new", (req, res) => {
+app.post("/drivers/new", upload.fields([
+  { name: 'license_image', maxCount: 1 },
+  { name: 'car_image_front', maxCount: 1 },
+  { name: 'car_image_back', maxCount: 1 },
+  { name: 'car_image_left', maxCount: 1 },
+  { name: 'car_image_right', maxCount: 1 },
+]), (req, res) => {
   const { name, phone, car, car_number, license, notes } = req.body;
   const created_at = new Date().toISOString();
+  
+  const license_image = req.files['license_image'] ? req.files['license_image'][0].path : null;
+  const car_image_front = req.files['car_image_front'] ? req.files['car_image_front'][0].path : null;
+  const car_image_back = req.files['car_image_back'] ? req.files['car_image_back'][0].path : null;
+  const car_image_left = req.files['car_image_left'] ? req.files['car_image_left'][0].path : null;
+  const car_image_right = req.files['car_image_right'] ? req.files['car_image_right'][0].path : null;
 
   db.run(
-    `INSERT INTO drivers VALUES (NULL,?,?,?,?,?,?,?)`,
-    [name, phone, car, car_number, license, notes, created_at],
+    `INSERT INTO drivers VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [name, phone, car, car_number, license, notes, license_image, car_image_front, car_image_back, car_image_left, car_image_right, created_at],
     () => res.redirect("/drivers")
   );
 });
@@ -761,7 +790,7 @@ app.get("/export/csv", (req, res) => {
              if (v === null || v === undefined) v = "";
              v = String(v);
 
-             if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+             if (v.includes(",") || v.includes('\'') || v.includes("\n")) {
                 v = `"${v.replace(/"/g, '""')}"`;
             }
 
