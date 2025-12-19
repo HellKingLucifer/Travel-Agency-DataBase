@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Edit Driver</title>
+    <title>Edit Trip</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
 
@@ -15,7 +16,9 @@
       </a>
 
       <div class="nav-links">
-        <a href="/drivers" class="active">🚗 Drivers</a>
+        <a href="/new-trip">➕ New Trip</a>
+        <a class="active" href="/trips">📋 View Trips</a>
+        <a href="/drivers">🚗 Drivers</a>
       </div>
 
       <div class="right-controls">
@@ -26,147 +29,252 @@
     <!-- MAIN -->
     <div class="container">
       <div class="card">
-        <h2>Edit Driver — <%= driver.name %></h2>
+        <h2>Edit Trip — #<%= trip.id %></h2>
 
-        <form
-          action="/drivers/<%= driver.id %>/edit"
-          method="POST"
-          style="margin-top: 14px"
-          enctype="multipart/form-data"
-        >
+        <form action="/trips/<%= trip.id %>/edit" method="POST" enctype="multipart/form-data">
+          <!-- TRIP TYPE -->
+          <h3 style="margin-top: 10px">Trip Type</h3>
           <div class="form-grid">
             <div class="form-row">
-              <label>Name</label>
+              <label>
+                <input type="radio" name="trip_type" value="one_way" <%= trip.trip_type === 'one_way' ? 'checked' : '' %> />
+                One Way
+              </label>
+            </div>
+            <div class="form-row">
+              <label>
+                <input type="radio" name="trip_type" value="round_trip" <%= trip.trip_type === 'round_trip' ? 'checked' : '' %> /> 
+                Round Trip
+              </label>
+            </div>
+          </div>
+
+          <!-- CUSTOMER -->
+          <h3 style="margin-top: 10px">Customer Details</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Customer Name</label>
+              <input type="text" name="customer_name" value="<%= trip.customer_name %>" required />
+            </div>
+
+            <div class="form-row">
+              <label>Phone Number</label>
+              <input type="text" name="phone_number" value="<%= trip.phone_number %>" required />
+            </div>
+
+            <div class="form-row">
+              <label>Customer ID</label>
+              <input type="text" name="customer_id" value="<%= trip.customer_id %>" />
+            </div>
+
+            <div class="form-row">
+              <label>Referral</label>
+              <input type="text" name="referral" value="<%= trip.referral %>" />
+            </div>
+          </div>
+
+          <!-- DEPARTURE -->
+          <h3 style="margin-top: 18px">Departure Details</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Departure Place</label>
+              <input type="text" name="departure_place" value="<%= trip.departure_place %>" required />
+            </div>
+
+            <div class="form-row">
+              <label>Departure Date</label>
+              <input type="date" name="departure_date" value="<%= trip.departure_date %>" required />
+            </div>
+
+            <div class="form-row">
+              <label>Departure Time</label>
+              <input type="time" name="departure_time" value="<%= trip.departure_time %>" required />
+            </div>
+          </div>
+
+          <!-- ARRIVAL -->
+          <h3 style="margin-top: 18px">Arrival Details</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Arrival Place</label>
+              <input type="text" name="arrival_place" value="<%= trip.arrival_place %>" required />
+            </div>
+
+            <div class="form-row">
+              <label>Arrival Date</label>
+              <input type="date" name="arrival_date" value="<%= trip.arrival_date %>" required />
+            </div>
+
+            <div class="form-row">
+              <label>Arrival Time</label>
+              <input type="time" name="arrival_time" value="<%= trip.arrival_time %>" required />
+            </div>
+          </div>
+
+          <!-- ASSIGNMENT -->
+          <h3 style="margin-top: 18px">Assignment</h3>
+          <div class="form-grid">
+            <div class="form-row" style="position: relative">
+              <label>Assigned Driver</label>
               <input
+                id="driver-search"
                 type="text"
-                name="name"
-                value="<%= driver.name %>"
-                required
+                name="assigned_driver"
+                autocomplete="off"
+                placeholder="Type driver name (or double-click to edit)"
+                value="<%= trip.assigned_driver %>"
               />
+
+              <!-- AUTOCOMPLETE BOX -->
+              <div
+                id="driver-suggestions"
+                class="suggestions"
+                style="display: none"
+              ></div>
             </div>
 
             <div class="form-row">
-              <label>Phone</label>
-              <input type="text" name="phone" value="<%= driver.phone %>" />
+              <label>Assigned Car</label>
+              <input id="assigned_car" type="text" name="assigned_car" value="<%= trip.assigned_car %>" />
             </div>
 
             <div class="form-row">
-              <label>Car</label>
-              <input type="text" name="car" value="<%= driver.car %>" />
+              <label>Driver Phone</label>
+              <input
+                id="driver_phone"
+                type="text"
+                name="driver_phone"
+                placeholder="Driver phone (auto-filled)"
+                value="<%= trip.driver_phone %>"
+              />
             </div>
 
             <div class="form-row">
               <label>Car Number</label>
               <input
+                id="car_number"
                 type="text"
                 name="car_number"
-                value="<%= driver.car_number %>"
+                placeholder="Car number (auto-filled)"
+                value="<%= trip.car_number %>"
               />
             </div>
-
+          </div>
+          
+          <!-- CAR IMAGES -->
+          <h3 style="margin-top: 18px">Car Images</h3>
+          <div class="form-grid">
             <div class="form-row">
               <label>Car Image (Front)</label>
-              <input type="file" name="car_image_front" />
-            </div>
-
-            <% if (driver.car_image_front) { %>
-            <div class="form-row" style="grid-column: 1 / -1">
-              <label>Current Car Image (Front)</label>
-              <img
-                src="/uploads/<%= driver.car_image_front %>"
-                alt="car-image-front"
-                style="max-width: 250px"
-              />
-            </div>
-            <% } %>
+              <input type="file" name="car_image_front" accept="image/*" onchange="previewImage(event, 'car_image_front_preview')"/>
+            <img id="car_image_front_preview" src="<%= trip.car_image_front ? '/' + trip.car_image_front : '' %>" style="max-width: 200px;" <%= trip.car_image_front ? '' : 'hidden' %>/>/>
+          </div>
 
             <div class="form-row">
               <label>Car Image (Back)</label>
-              <input type="file" name="car_image_back" />
+              <input type="file" name="car_image_back" accept="image/*" onchange="previewImage(event, 'car_image_back_preview')"/>
+              <img id="car_image_back_preview" src="<%= trip.car_image_back ? '/' + trip.car_image_back : '' %>" alt="Car Image (Back)" style="max-width: 200px;" <%= trip.car_image_back ? '' : 'display: none;' %>/>/>
             </div>
-
-            <% if (driver.car_image_back) { %>
-            <div class="form-row" style="grid-column: 1 / -1">
-              <label>Current Car Image (Back)</label>
-              <img
-                src="/uploads/<%= driver.car_image_back %>"
-                alt="car-image-back"
-                style="max-width: 250px"
-              />
-            </div>
-            <% } %>
 
             <div class="form-row">
               <label>Car Image (Left)</label>
-              <input type="file" name="car_image_left" />
+              <input type="file" name="car_image_left" accept="image/*" onchange="previewImage(event, 'car_image_left_preview')"/>
+              <img id="car_image_left_preview" src="<%= trip.car_image_left ? '/' + trip.car_image_left : '' %>" alt="Car Image (Left)" style="max-width: 200px;" <%= trip.car_image_left ? '' : 'display: none;' %>/>/>
             </div>
-
-            <% if (driver.car_image_left) { %>
-            <div class="form-row" style="grid-column: 1 / -1">
-              <label>Current Car Image (Left)</label>
-              <img
-                src="/uploads/<%= driver.car_image_left %>"
-                alt="car-image-left"
-                style="max-width: 250px"
-              />
-            </div>
-            <% } %>
 
             <div class="form-row">
               <label>Car Image (Right)</label>
-              <input type="file" name="car_image_right" />
+              <input type="file" name="car_image_right" accept="image/*" onchange="previewImage(event, 'car_image_right_preview')"/>
+              <img id="car_image_right_preview" src="<%= trip.car_image_right ? '/' + trip.car_image_right : '' %>" alt="Car Image (Right)" style="max-width: 200px;" <%= trip.car_image_right ? '' : 'display: none;' %>/>/>
             </div>
+          </div>
 
-            <% if (driver.car_image_right) { %>
-            <div class="form-row" style="grid-column: 1 / -1">
-              <label>Current Car Image (Right)</label>
-              <img
-                src="/uploads/<%= driver.car_image_right %>"
-                alt="car-image-right"
-                style="max-width: 250px"
-              />
+          <!-- FEES -->
+          <h3 style="margin-top: 18px">Fee & Toll</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Travelling Fee</label>
+              <input type="number" step="0.01" name="travelling_fee" value="<%= trip.travelling_fee %>" required />
             </div>
-            <% } %>
 
             <div class="form-row">
-              <label>License Image</label>
-              <input type="file" name="license_image" />
+              <label>Toll Option</label>
+              <select name="toll_option" required>
+                <option value="include" <%= trip.includes_toll ? 'selected' : '' %>>Including Toll</option>
+                <option value="exclude" <%= !trip.includes_toll ? 'selected' : '' %>>Excluding Toll</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- PAYMENT -->
+          <h3 style="margin-top: 18px">Payment</h3>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Driver Payment Status</label>
+              <select
+                name="driver_payment_status"
+                id="driver_payment_status"
+                required
+              >
+                <option value="not_paid" <%= trip.driver_payment_status === 'not_paid' ? 'selected' : '' %>>Not Paid</option>
+                <option value="paid" <%= trip.driver_payment_status === 'paid' ? 'selected' : '' %>>Paid</option>
+              </select>
             </div>
 
-            <% if (driver.license_image) { %>
-            <div class="form-row" style="grid-column: 1 / -1">
-              <label>Current License Image</label>
-              <img
-                src="/uploads/<%= driver.license_image %>"
-                alt="license-image"
-                style="max-width: 250px"
-              />
-            </div>
-            <% } %>
-
-            <div class="form-row" style="grid-column: 1 / -1">
-              <label>Notes</label>
-              <textarea name="notes" style="min-height: 90px"><%= driver.notes %></textarea>
+            <div class="form-row" id="payment_method_div" style= <%= trip.driver_payment_status === 'paid' ? '' : 'display: none' %>>/>
+              <label>Payment Method</label>
+              <select name="payment_method" id="payment_method">
+                <option value="online" <%= trip.payment_method === 'online' ? 'selected' : '' %>>Online</option>
+                <option value="cash" <%= trip.payment_method === 'cash' ? 'selected' : '' %>>Cash</option>
+              </select>
             </div>
           </div>
 
           <!-- BUTTONS -->
-          <div style="margin-top: 18px">
-            <button class="btn" type="submit">Update Driver</button>
-            <a class="btn ghost" href="/drivers" style="margin-left: 10px">Cancel</a>
+          <div style="margin-top: 20px">
+            <button class="btn" type="submit">Update Trip</button>
+            <a class="btn ghost" href="/trips" style="margin-left: 10px"
+              >Cancel</a
+            >
           </div>
         </form>
       </div>
     </div>
 
     <script src="/main.js"></script>
+    <script>
+      function previewImage(event, previewId) {
+        const reader = new FileReader();
+        reader.onload = function(){
+          const output = document.getElementById(previewId);
+          output.src = reader.result;
+          output.style.display = 'block';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const driverPaymentStatus = document.getElementById('driver_payment_status');
+        const paymentMethodDiv = document.getElementById('payment_method_div');
+        const paymentMethodSelect = document.getElementById('payment_method');
+
+        driverPaymentStatus.addEventListener('change', function () {
+          if (this.value === 'paid') {
+            paymentMethodDiv.style.display = 'flex';
+            paymentMethodSelect.setAttribute('required', 'required');
+          } else {
+            paymentMethodDiv.style.display = 'none';
+            paymentMethodSelect.removeAttribute('required');
+            paymentMethodSelect.value = 'online'; // Reset to default
+          }
+        });
+      });
+
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+    </script>
   </body>
 </html>
-
-<script>
-  window.addEventListener("pageshow", function (event) {
-    if (event.persisted) {
-      window.location.reload();
-    }
-  });
-</script>

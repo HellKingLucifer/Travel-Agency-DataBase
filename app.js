@@ -69,6 +69,7 @@ function ensureSchema() {
       trip_type TEXT,
       driver_payment_status TEXT,
       payment_method TEXT,
+      car_images TEXT,
       created_at TEXT NOT NULL
     )`,
     (err) => {
@@ -462,9 +463,9 @@ app.post("/new-trip", (req, res) => {
       departure_place, departure_date, departure_time,
       arrival_place, arrival_date, arrival_time,
       assigned_driver, assigned_car, driver_phone, car_number,
-      travelling_fee, includes_toll, trip_type, created_at, driver_payment_status, payment_method
+      travelling_fee, includes_toll, trip_type, created_at, driver_payment_status, payment_method, car_images
     )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   db.run(
@@ -489,7 +490,8 @@ app.post("/new-trip", (req, res) => {
       trip_type,
       created_at,
       driver_payment_status,
-      payment_method
+      payment_method,
+      "[]"
     ],
     (err) => {
       if (err) {
@@ -571,8 +573,33 @@ app.get("/referral/:referralName", (req, res) => {
 
 // ------------------ TRIP DETAILS ------------------
 app.get("/trips/:id", (req, res) => {
-  db.get("SELECT * FROM trips WHERE id=?", [req.params.id], (err, trip) => {
-    if (!trip) return res.status(404).send("Trip not found");
+  const query = `
+    SELECT t.*, 
+           d.car_image_front, 
+           d.car_image_back, 
+           d.car_image_left, 
+           d.car_image_right
+    FROM trips t
+    LEFT JOIN drivers d ON t.assigned_driver = d.name
+    WHERE t.id = ?
+  `;
+  db.get(query, [req.params.id], (err, trip) => {
+    if (err) {
+      console.error("Error fetching trip details:", err);
+      return res.status(500).send("Database error");
+    }
+    if (!trip) {
+      return res.status(404).send("Trip not found");
+    }
+
+    const carImages = [];
+    if (trip.car_image_front) carImages.push(trip.car_image_front);
+    if (trip.car_image_back) carImages.push(trip.car_image_back);
+    if (trip.car_image_left) carImages.push(trip.car_image_left);
+    if (trip.car_image_right) carImages.push(trip.car_image_right);
+
+    trip.car_images = carImages;
+
     res.render("trip-details", { trip });
   });
 });
@@ -790,9 +817,10 @@ app.get("/export/csv", (req, res) => {
              if (v === null || v === undefined) v = "";
              v = String(v);
 
-             if (v.includes(",") || v.includes('\'') || v.includes("\n")) {
-                v = `"${v.replace(/"/g, '""')}"`;
-            }
+            if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+            v = `"${v.replace(/"/g, '""')}"`;
+           }
+
 
             return v;
 

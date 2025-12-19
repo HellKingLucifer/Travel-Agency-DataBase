@@ -105,6 +105,20 @@
             </span>
           <% } %>
         </div>
+        
+        <!-- CAR IMAGES BOX -->
+        <div class="detail-box">
+          <h3>Car Images</h3>
+          <% if (trip.car_images && trip.car_images.length > 0) { %>
+            <div class="car-images">
+              <% trip.car_images.forEach(function(image) { %>
+                <img src="<%= image %>" alt="Car Image" style="max-width: 100%; margin-bottom: 10px;">
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p>No car images available.</p>
+          <% } %>
+        </div>
 
       </div>
 
