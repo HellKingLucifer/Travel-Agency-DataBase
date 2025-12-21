@@ -29,67 +29,128 @@
         <h2>Edit Driver — <%= driver.name %></h2>
 
         <form
-          action="/drivers/<%= driver.id %>/edit"
-          method="POST"
-          style="margin-top: 14px"
-        >
-          <div class="form-grid">
-            <div class="form-row">
-              <label>Name</label>
-              <input
-                type="text"
-                name="name"
-                value="<%= driver.name %>"
-                required
-              />
-            </div>
+  action="/drivers/<%= driver.id %>/edit"
+  method="POST"
+  enctype="multipart/form-data"
+  style="margin-top: 14px"
+>
+  <div class="form-grid">
 
-            <div class="form-row">
-              <label>Phone</label>
-              <input type="text" name="phone" value="<%= driver.phone %>" />
-            </div>
+    <!-- NAME -->
+    <div class="form-row">
+      <label>Name</label>
+      <input type="text" name="name" value="<%= driver.name %>" required />
+    </div>
 
-            <div class="form-row">
-              <label>Car</label>
-              <input type="text" name="car" value="<%= driver.car %>" />
-            </div>
+    <!-- PHONE -->
+    <div class="form-row">
+      <label>Phone</label>
+      <input type="text" name="phone" value="<%= driver.phone %>" />
+    </div>
 
-            <div class="form-row">
-              <label>Car Number</label>
-              <input
-                type="text"
-                name="car_number"
-                value="<%= driver.car_number %>"
-              />
-            </div>
+    <!-- CAR -->
+    <div class="form-row">
+      <label>Car</label>
+      <input type="text" name="car" value="<%= driver.car %>" />
+    </div>
 
-            <div class="form-row">
-              <label>License</label>
-              <input type="text" name="license" value="<%= driver.license %>" />
-            </div>
+    <!-- CAR NUMBER -->
+    <div class="form-row">
+      <label>Car Number</label>
+      <input type="text" name="car_number" value="<%= driver.car_number %>" />
+    </div>
 
-            <div class="form-row" style="grid-column: 1 / -1">
-              <label>Notes</label>
-              <textarea name="notes" style="min-height: 90px">
-<%= driver.notes %></textarea
-              >
-            </div>
-          </div>
+    <!-- LICENSE -->
+    <div class="form-row">
+      <label>License</label>
+      <input type="text" name="license" value="<%= driver.license %>" />
+    </div>
 
-          <!-- BUTTONS -->
-          <div style="margin-top: 18px">
-            <button class="btn" type="submit">Update Driver</button>
-            <a class="btn ghost" href="/drivers" style="margin-left: 10px"
-              >Cancel</a
-            >
-          </div>
-        </form>
+    <!-- LICENSE IMAGE -->
+    <div class="form-row">
+      <label>Driver License Image</label>
+
+      <% if (driver.license_image) { %>
+        <img
+          src="<%= driver.license_image %>"
+          id="license_image_preview"
+          style="max-width: 200px; display: block; margin-bottom: 6px"
+        />
+      <% } %>
+
+
+      <input
+        type="file"
+        name="license_image"
+        onchange="previewImage('license_image_preview', this)"
+      />
+    </div>
+    <small class="muted">(Current image — upload to replace)</small>
+
+
+    <!-- CAR IMAGES -->
+    <% const carImages = [
+      ['Front', 'car_image_front'],
+      ['Back', 'car_image_back'],
+      ['Left', 'car_image_left'],
+      ['Right', 'car_image_right']
+    ]; %>
+
+    <% carImages.forEach(([label, field]) => { %>
+  <div class="form-row">
+    <label>Car Image (<%= label %>)</label>
+
+    <img
+      src="<%= driver[field] || '' %>"
+      id="<%= field %>_preview"
+      class="<%= driver[field] ? '' : 'hidden' %>"
+      style="max-width: 200px; margin-bottom: 6px;"
+    />
+
+    <small class="muted">(Current image — upload to replace)</small>
+
+    <input
+      type="file"
+      name="<%= field %>"
+      onchange="previewImage('<%= field %>_preview', this)"
+    />
+  </div>
+<% }) %>
+
+      <!-- NOTES -->
+      <div class="form-row" style="grid-column: 1 / -1">
+      <label>Notes</label>
+      <textarea name="notes" style="min-height: 90px"><%= driver.notes %></textarea>
+      </div>
+
+      </div>
+
+      <div style="margin-top: 18px">
+      <button class="btn" type="submit">Update Driver</button>
+      <a class="btn ghost" href="/drivers" style="margin-left: 10px">Cancel</a>
+      </div>
+      </form>
+
       </div>
     </div>
 
     <script src="/main.js"></script>
   </body>
 </html>
+
+<script>
+  function previewImage(imgId, input) {
+    const img = document.getElementById(imgId);
+    if (!img || !input.files || !input.files[0]) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      img.src = e.target.result;
+      img.style.display = "block";
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+</script>
 
 <script>
   window.addEventListener('pageshow', function (event) {

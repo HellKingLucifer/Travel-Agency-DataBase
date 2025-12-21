@@ -1,22 +1,50 @@
 // ---------------------------------------------------------
-// Travel Agency System - APP.JS (UPDATED WITH TRIP MODALS)
+// Travel Agency System - APP.JS (FULL FIXED VERSION)
 // ---------------------------------------------------------
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const bodyParser = require("body-parser");
 const multer = require("multer");
+const fs = require("fs");
 
 const app = express();
 const PORT = 3000;
 
+// ------------------ GLOBAL HELPERS (FIXED) ------------------
+
+const normalizePublicPath = (p) => {
+  if (!p) return null;
+  return p.replace(/^\/?public\/?/, "").replace(/^\/+/, "");
+};
+
+const fixPath = (f) => {
+  if (!f) return null;
+  return "/" + normalizePublicPath(f.path.replace(/\\/g, "/"));
+};
+
+const deleteFile = (filePath) => {
+  if (!filePath) return;
+  const clean = normalizePublicPath(filePath);
+  const fullPath = path.join(__dirname, "public", clean);
+  if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+};
+
+const makeDate = (dateStr, timeStr) => {
+  if (!dateStr) return null;
+  const t = (timeStr && timeStr.trim()) || "00:00";
+  return new Date(`${dateStr}T${t}`);
+};
+
 // ------------------ MIDDLEWARE ------------------
+
 app.use((req, res, next) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   next();
 });
+
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -25,18 +53,33 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "Views"));
 
 // ------------------ MULTER CONFIG ------------------
+
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/uploads/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  },
+  destination: (req, file, cb) => cb(null, "public/uploads/"),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + "-" + file.originalname),
 });
 
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+
+  if (!allowed.includes(file.mimetype)) {
+    // ❗ IMPORTANT: pass false, not Error
+    return cb(null, false);
+  }
+
+  cb(null, true);
+};
+
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 },
+});
 
 // ------------------ DATABASE INIT ------------------
+
 const db = new sqlite3.Database("./travel_agency.db", (err) => {
   if (err) {
     console.error("❌ Could not connect to DB:", err);
@@ -71,10 +114,7 @@ function ensureSchema() {
       payment_method TEXT,
       car_images TEXT,
       created_at TEXT NOT NULL
-    )`,
-    (err) => {
-      if (err) console.error("❌ Trips table error:", err);
-    }
+    )`
   );
 
   db.run(
@@ -92,10 +132,7 @@ function ensureSchema() {
       car_image_left TEXT,
       car_image_right TEXT,
       created_at TEXT NOT NULL
-    )`,
-    (err) => {
-      if (err) console.error("❌ Drivers table error:", err);
-    }
+    )`
   );
 }
 
@@ -103,8 +140,9 @@ function ensureSchema() {
 app.get("/", (req, res) => res.redirect("/dashboard"));
 
 // ------------------ DASHBOARD ------------------
+
 app.get("/dashboard", (req, res) => {
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
   const now = new Date();
 
   const stats = {
@@ -118,45 +156,40 @@ app.get("/dashboard", (req, res) => {
     monthlyLabels: [],
     monthlyTotals: [],
     monthlyRevenueLabels: [],
-    monthlyRevenueTotals: []
+    monthlyRevenueTotals: [],
+    monthlyOneWayTotals: [],
+    monthlyRoundTripTotals: [],
   };
-
-  function makeDate(dateStr, timeStr) {
-    if (!dateStr) return null;
-    const t = (timeStr && timeStr.trim()) || "00:00";
-    return new Date(`${dateStr}T${t}`);
-  }
 
   // 1) Total trips
   db.get("SELECT COUNT(*) AS total FROM trips", [], (e1, r1) => {
     stats.totalTrips = r1?.total || 0;
 
-    // 2) Today trips count
+    // 2) Today trips
     db.get(
       "SELECT COUNT(*) AS today_count FROM trips WHERE departure_date = ?",
       [today],
       (e2, r2) => {
         stats.todayTrips = r2?.today_count || 0;
 
-        // 3) Total revenue
+        // 3) Revenue
         db.get(
           "SELECT SUM(travelling_fee) AS revenue FROM trips",
           [],
           (e3, r3) => {
             stats.revenue = r3?.revenue || 0;
 
-            // 4) Drivers list (full row for modal)
+            // 4) Drivers
             db.all("SELECT * FROM drivers", [], (e4, drivers) => {
               drivers = drivers || [];
               stats.totalDrivers = drivers.length;
 
-              // 5) Driver status using trips
+              // 5) Driver status
               db.all(
                 `SELECT *
-              FROM trips
-              WHERE assigned_driver IS NOT NULL
-              AND TRIM(assigned_driver) != ''`,
-
+                 FROM trips
+                 WHERE assigned_driver IS NOT NULL
+                   AND TRIM(assigned_driver) != ''`,
                 [],
                 (e5, tripsForDrivers) => {
                   tripsForDrivers = tripsForDrivers || [];
@@ -203,75 +236,53 @@ app.get("/dashboard", (req, res) => {
                   stats.idleDrivers = idle;
                   stats.upcomingDrivers = upcomingDrivers;
 
+                  // ---- REMAINDER CONTINUES IN PART 2 ----
                   // 6) Trips & revenue per month
                   const curr = new Date(today + "T00:00");
-
                   const targetMonths = [];
+
                   for (let i = -2; i <= 2; i++) {
                     const d = new Date(curr);
                     d.setMonth(d.getMonth() + i);
-                    const ym = d.toISOString().slice(0, 7);
-                    targetMonths.push(ym);
+                    targetMonths.push(d.toISOString().slice(0, 7));
                   }
 
                   db.all(
                     `SELECT strftime('%Y-%m', departure_date) AS m,
-          COUNT(*) AS cnt,
-          SUM(travelling_fee) AS rev,
-          SUM(
-            CASE
-              WHEN trip_type = 'round_trip' THEN 1
-              ELSE 0
-            END
-          ) AS round_trip_cnt,
-          SUM(
-            CASE
-              WHEN trip_type = 'one_way'
-                   OR trip_type IS NULL
-                   OR TRIM(trip_type) = ''
-              THEN 1
-              ELSE 0
-            END
-          ) AS one_way_cnt
-   FROM trips
-   WHERE departure_date >= ?
-     AND departure_date <= ?
-   GROUP BY m`,
+                            COUNT(*) AS cnt,
+                            SUM(travelling_fee) AS rev,
+                            SUM(CASE WHEN trip_type = 'round_trip' THEN 1 ELSE 0 END) AS round_trip_cnt,
+                            SUM(CASE WHEN trip_type = 'one_way'
+                                      OR trip_type IS NULL
+                                      OR TRIM(trip_type) = '' THEN 1 ELSE 0 END) AS one_way_cnt
+                     FROM trips
+                     WHERE departure_date BETWEEN ? AND ?
+                     GROUP BY m`,
                     [
                       targetMonths[0] + "-01",
-                      targetMonths[4] + "-31"
+                      targetMonths[4] + "-31",
                     ],
                     (e6, monthlyRows) => {
                       monthlyRows = monthlyRows || [];
                       const map = new Map();
                       monthlyRows.forEach((r) => map.set(r.m, r));
 
-                      // labels (same 2 months before, current, 2 after)
                       stats.monthlyLabels = targetMonths;
-
-                      // total trips per month (existing)
                       stats.monthlyTotals = targetMonths.map(
-                        (m) => (map.get(m)?.cnt) || 0
+                        (m) => map.get(m)?.cnt || 0
                       );
-
-                      // revenue per month (existing)
                       stats.monthlyRevenueLabels = targetMonths;
                       stats.monthlyRevenueTotals = targetMonths.map(
-                        (m) => (map.get(m)?.rev) || 0
+                        (m) => map.get(m)?.rev || 0
                       );
-
-                      // NEW: one-way vs round-trip counts per month
                       stats.monthlyOneWayTotals = targetMonths.map(
-                        (m) => (map.get(m)?.one_way_cnt) || 0
+                        (m) => map.get(m)?.one_way_cnt || 0
                       );
                       stats.monthlyRoundTripTotals = targetMonths.map(
-                        (m) => (map.get(m)?.round_trip_cnt) || 0
+                        (m) => map.get(m)?.round_trip_cnt || 0
                       );
 
-                      // ... (rest of your dashboard logic stays the same)
-
-
-                      // 8) Upcoming timeline (next 6 trips)
+                      // 8) Timeline (next 6 trips)
                       db.all(
                         `SELECT id, customer_name, assigned_driver,
                                 departure_place, arrival_place,
@@ -284,7 +295,7 @@ app.get("/dashboard", (req, res) => {
                         (e8, timelineRows) => {
                           const timelineTrips = timelineRows || [];
 
-                          // 9) Today / ongoing / upcoming trip modals data
+                          // 9) Today trips
                           db.all(
                             `SELECT *
                              FROM trips
@@ -294,27 +305,33 @@ app.get("/dashboard", (req, res) => {
                             (e9, todayRows) => {
                               const todayTrips = todayRows || [];
 
+                              // 10) Ongoing / Upcoming
                               db.all(
                                 `SELECT * FROM trips`,
                                 [],
                                 (e10, allTrips) => {
                                   allTrips = allTrips || [];
-
                                   const ongoingTrips = [];
                                   const upcomingTrips = [];
 
                                   allTrips.forEach((t) => {
-                                    const dep = makeDate(t.departure_date, t.departure_time);
-                                    const arr = makeDate(t.arrival_date, t.arrival_time);
+                                    const dep = makeDate(
+                                      t.departure_date,
+                                      t.departure_time
+                                    );
+                                    const arr = makeDate(
+                                      t.arrival_date,
+                                      t.arrival_time
+                                    );
                                     if (!dep || !arr) return;
 
                                     if (dep <= now && now <= arr)
                                       ongoingTrips.push(t);
-                                    else if (t.departure_date > today)
+                                    else if (dep > now)
                                       upcomingTrips.push(t);
                                   });
 
-                                  // Driver status full details
+                                  // Driver full status list
                                   const driverStatusList = [];
 
                                   drivers.forEach((d) => {
@@ -326,8 +343,14 @@ app.get("/dashboard", (req, res) => {
                                     let upcomingTrip = null;
 
                                     list.forEach((t) => {
-                                      const dep = makeDate(t.departure_date, t.departure_time);
-                                      const arr = makeDate(t.arrival_date, t.arrival_time);
+                                      const dep = makeDate(
+                                        t.departure_date,
+                                        t.departure_time
+                                      );
+                                      const arr = makeDate(
+                                        t.arrival_date,
+                                        t.arrival_time
+                                      );
                                       if (!dep || !arr) return;
 
                                       if (dep <= now && now <= arr) {
@@ -335,22 +358,23 @@ app.get("/dashboard", (req, res) => {
                                         if (
                                           !currentTrip ||
                                           arr <
-                                          makeDate(
-                                            currentTrip.arrival_date,
-                                            currentTrip.arrival_time
-                                          )
+                                            makeDate(
+                                              currentTrip.arrival_date,
+                                              currentTrip.arrival_time
+                                            )
                                         ) {
                                           currentTrip = t;
                                         }
                                       } else if (dep > now) {
-                                        if (status !== "busy") status = "upcoming";
+                                        if (status !== "busy")
+                                          status = "upcoming";
                                         if (
                                           !upcomingTrip ||
                                           dep <
-                                          makeDate(
-                                            upcomingTrip.departure_date,
-                                            upcomingTrip.departure_time
-                                          )
+                                            makeDate(
+                                              upcomingTrip.departure_date,
+                                              upcomingTrip.departure_time
+                                            )
                                         ) {
                                           upcomingTrip = t;
                                         }
@@ -361,38 +385,21 @@ app.get("/dashboard", (req, res) => {
                                       ...d,
                                       status,
                                       currentTrip,
-                                      upcomingTrip
+                                      upcomingTrip,
                                     });
                                   });
 
-                                  // Sort: busy → upcoming → idle
+                                  // Sort drivers
                                   driverStatusList.sort((a, b) => {
                                     const order = {
                                       busy: 0,
                                       upcoming: 1,
-                                      idle: 2
+                                      idle: 2,
                                     };
-
                                     if (a.status !== b.status)
                                       return order[a.status] - order[b.status];
 
-                                    const aTrip = a.currentTrip || a.upcomingTrip;
-                                    const bTrip = b.currentTrip || b.upcomingTrip;
-
-                                    if (!aTrip || !bTrip)
-                                      return a.name.localeCompare(b.name);
-
-                                    const aTime = makeDate(
-                                      aTrip.arrival_date || aTrip.departure_date,
-                                      aTrip.arrival_time || aTrip.departure_time
-                                    );
-
-                                    const bTime = makeDate(
-                                      bTrip.arrival_date || bTrip.departure_date,
-                                      bTrip.arrival_time || bTrip.departure_time
-                                    );
-
-                                    return aTime - bTime;
+                                    return a.name.localeCompare(b.name);
                                   });
 
                                   res.render("dashboard", {
@@ -402,7 +409,7 @@ app.get("/dashboard", (req, res) => {
                                     todayTrips,
                                     ongoingTrips,
                                     upcomingTrips,
-                                    driversData: driverStatusList
+                                    driversData: driverStatusList,
                                   });
                                 }
                               );
@@ -423,81 +430,60 @@ app.get("/dashboard", (req, res) => {
 });
 
 // ------------------ CREATE TRIP ------------------
+
 app.get("/new-trip", (req, res) => res.render("new-trip"));
 
 app.post("/new-trip", (req, res) => {
-  const {
-    customer_name,
-    phone_number,
-    customer_id,
-    referral,
-    departure_place,
-    departure_date,
-    departure_time,
-    arrival_place,
-    arrival_date,
-    arrival_time,
-    assigned_driver,
-    assigned_car,
-    driver_phone,
-    car_number,
-    travelling_fee,
-    toll_option,
-    trip_type,
-    driver_payment_status,
-    payment_method
-  } = req.body;
+  const b = req.body;
 
-  if (!arrival_date || !arrival_time) {
+  if (!b.arrival_date || !b.arrival_time) {
     return res.send(
-      `<script>alert('Arrival date & time required'); window.history.back();</script>`
+      `<script>alert('Arrival date & time required');history.back();</script>`
     );
   }
 
-  const includes_toll = toll_option === "include" ? 1 : 0;
-  const created_at = new Date().toISOString();
+  const includes_toll = b.toll_option === "include" ? 1 : 0;
 
-  const sql = `
+  db.run(
+    `
     INSERT INTO trips (
       customer_name, phone_number, customer_id, referral,
       departure_place, departure_date, departure_time,
       arrival_place, arrival_date, arrival_time,
       assigned_driver, assigned_car, driver_phone, car_number,
-      travelling_fee, includes_toll, trip_type, created_at, driver_payment_status, payment_method, car_images
+      travelling_fee, includes_toll, trip_type,
+      driver_payment_status, payment_method, car_images, created_at
     )
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-  `;
-
-  db.run(
-    sql,
+    `,
     [
-      customer_name,
-      phone_number,
-      customer_id || "",
-      referral || "",
-      departure_place,
-      departure_date,
-      departure_time,
-      arrival_place,
-      arrival_date,
-      arrival_time,
-      assigned_driver || "",
-      assigned_car || "",
-      driver_phone || "",
-      car_number || "",
-      Number(travelling_fee) || 0,
+      b.customer_name,
+      b.phone_number,
+      b.customer_id || "",
+      b.referral || "",
+      b.departure_place,
+      b.departure_date,
+      b.departure_time,
+      b.arrival_place,
+      b.arrival_date,
+      b.arrival_time,
+      b.assigned_driver || "",
+      b.assigned_car || "",
+      b.driver_phone || "",
+      b.car_number || "",
+      Number(b.travelling_fee) || 0,
       includes_toll,
-      trip_type,
-      created_at,
-      driver_payment_status,
-      payment_method,
-      "[]"
+      b.trip_type,
+      b.driver_payment_status,
+      b.payment_method,
+      "[]",
+      new Date().toISOString(),
     ],
     (err) => {
       if (err) {
         console.error("Insert Trip Error:", err);
         return res.send(
-          `<script>alert('Database insert failed! Error: ${err.message}'); window.history.back();</script>`
+          `<script>alert("DB error");history.back();</script>`
         );
       }
       res.redirect("/trips");
@@ -506,16 +492,16 @@ app.post("/new-trip", (req, res) => {
 });
 
 // ------------------ TRIPS LIST ------------------
+
 app.get("/trips", (req, res) => {
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = 10;
   const offset = (page - 1) * limit;
-  const searchRaw = req.query.search || "";
-  const like = `%${searchRaw}%`;
+  const search = req.query.search || "";
+  const like = `%${search}%`;
 
   const countSql = `
-    SELECT COUNT(*) AS total
-    FROM trips
+    SELECT COUNT(*) AS total FROM trips
     WHERE customer_name LIKE ?
        OR phone_number LIKE ?
        OR assigned_driver LIKE ?
@@ -525,8 +511,7 @@ app.get("/trips", (req, res) => {
   `;
 
   const dataSql = `
-    SELECT *
-    FROM trips
+    SELECT * FROM trips
     WHERE customer_name LIKE ?
        OR phone_number LIKE ?
        OR assigned_driver LIKE ?
@@ -539,254 +524,360 @@ app.get("/trips", (req, res) => {
 
   const params = [like, like, like, like, like, like];
 
-  db.get(countSql, params, (err, row) => {
+  db.get(countSql, params, (_, row) => {
     const total = row?.total || 0;
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
-    db.all(dataSql, [...params, limit, offset], (err2, trips) => {
-      if (err2) return res.status(500).send("DB Error");
+    db.all(dataSql, [...params, limit, offset], (_, trips) => {
       res.render("trips", {
-        trips,
-        search: searchRaw,
+        trips: trips || [],
+        search,
         currentPage: page,
-        totalPages
+        totalPages,
       });
     });
   });
 });
 
-// ------------------ REFERRAL TRIPS ------------------
-app.get("/referral/:referralName", (req, res) => {
-  const referralName = req.params.referralName;
-  const sql = "SELECT * FROM trips WHERE referral = ? ORDER BY created_at DESC";
+// ------------------ REFERRAL ------------------
 
-  db.all(sql, [referralName], (err, trips) => {
-    if (err) {
-      return res.status(500).send("DB Error");
+app.get("/referral/:referralName", (req, res) => {
+  db.all(
+    `SELECT * FROM trips WHERE referral=? ORDER BY created_at DESC`,
+    [req.params.referralName],
+    (_, trips) => {
+      res.render("referral-trips", {
+        trips: trips || [],
+        referralName: req.params.referralName,
+      });
     }
-    res.render("referral-trips", {
-      trips,
-      referralName,
-    });
-  });
+  );
 });
 
 // ------------------ TRIP DETAILS ------------------
+
 app.get("/trips/:id", (req, res) => {
-  const query = `
-    SELECT t.*, 
-           d.car_image_front, 
-           d.car_image_back, 
-           d.car_image_left, 
-           d.car_image_right
+  const sql = `
+    SELECT t.*, d.car_image_front, d.car_image_back,
+           d.car_image_left, d.car_image_right
     FROM trips t
     LEFT JOIN drivers d ON t.assigned_driver = d.name
     WHERE t.id = ?
   `;
-  db.get(query, [req.params.id], (err, trip) => {
-    if (err) {
-      console.error("Error fetching trip details:", err);
-      return res.status(500).send("Database error");
-    }
-    if (!trip) {
-      return res.status(404).send("Trip not found");
-    }
 
-    const carImages = [];
-    if (trip.car_image_front) carImages.push(trip.car_image_front);
-    if (trip.car_image_back) carImages.push(trip.car_image_back);
-    if (trip.car_image_left) carImages.push(trip.car_image_left);
-    if (trip.car_image_right) carImages.push(trip.car_image_right);
+  db.get(sql, [req.params.id], (_, trip) => {
+    if (!trip) return res.status(404).send("Trip not found");
 
-    trip.car_images = carImages;
+    const imgs = [];
+    if (trip.car_image_front) imgs.push(trip.car_image_front);
+    if (trip.car_image_back) imgs.push(trip.car_image_back);
+    if (trip.car_image_left) imgs.push(trip.car_image_left);
+    if (trip.car_image_right) imgs.push(trip.car_image_right);
+    trip.car_images = imgs;
 
     res.render("trip-details", { trip });
   });
 });
 
 app.get("/trips/:id/print", (req, res) => {
-  db.get("SELECT * FROM trips WHERE id=?", [req.params.id], (err, trip) => {
-    if (!trip) return res.status(404).send("Trip not found");
-    res.render("trip-details-print", { trip });
-  });
+  db.get(
+    "SELECT * FROM trips WHERE id=?",
+    [req.params.id],
+    (_, trip) => {
+      if (!trip) return res.status(404).send("Trip not found");
+      res.render("trip-details-print", { trip });
+    }
+  );
 });
 
 // ------------------ EDIT TRIP ------------------
+
 app.get("/trips/:id/edit", (req, res) => {
-  db.get("SELECT * FROM trips WHERE id=?", [req.params.id], (err, trip) => {
-    if (!trip) return res.status(404).send("Trip not found");
-    res.render("edit-trip", { trip });
-  });
+  db.get(
+    "SELECT * FROM trips WHERE id=?",
+    [req.params.id],
+    (_, trip) => {
+      if (!trip) return res.status(404).send("Trip not found");
+      res.render("edit-trip", { trip });
+    }
+  );
 });
 
 app.post("/trips/:id/edit", (req, res) => {
-  const {
-    customer_name,
-    phone_number,
-    customer_id,
-    referral,
-    departure_place,
-    departure_date,
-    departure_time,
-    arrival_place,
-    arrival_date,
-    arrival_time,
-    assigned_driver,
-    assigned_car,
-    driver_phone,
-    car_number,
-    travelling_fee,
-    toll_option,
-    trip_type,
-    driver_payment_status,
-    payment_method
-  } = req.body;
-
-  if (!arrival_date || !arrival_time) {
+  const b = req.body;
+  if (!b.arrival_date || !b.arrival_time)
     return res.send(
-      `<script>alert('Arrival date & time required to update trip.'); window.history.back();</script>`
+      `<script>alert('Arrival date & time required');history.back();</script>`
     );
-  }
-
-  const includes_toll = toll_option === "include" ? 1 : 0;
 
   db.run(
-    `UPDATE trips SET
+    `
+    UPDATE trips SET
       customer_name=?, phone_number=?, customer_id=?, referral=?,
       departure_place=?, departure_date=?, departure_time=?,
       arrival_place=?, arrival_date=?, arrival_time=?,
       assigned_driver=?, assigned_car=?, driver_phone=?, car_number=?,
       travelling_fee=?, includes_toll=?, trip_type=?,
       driver_payment_status=?, payment_method=?
-     WHERE id=?`,
+    WHERE id=?
+    `,
     [
-      customer_name,
-      phone_number,
-      customer_id || "",
-      referral || "",
-      departure_place,
-      departure_date,
-      departure_time,
-      arrival_place,
-      arrival_date,
-      arrival_time,
-      assigned_driver || "",
-      assigned_car || "",
-      driver_phone || "",
-      car_number || "",
-      Number(travelling_fee) || 0,
-      includes_toll,
-      trip_type,
-      driver_payment_status,
-      payment_method,
-      req.params.id
+      b.customer_name,
+      b.phone_number,
+      b.customer_id || "",
+      b.referral || "",
+      b.departure_place,
+      b.departure_date,
+      b.departure_time,
+      b.arrival_place,
+      b.arrival_date,
+      b.arrival_time,
+      b.assigned_driver || "",
+      b.assigned_car || "",
+      b.driver_phone || "",
+      b.car_number || "",
+      Number(b.travelling_fee) || 0,
+      b.toll_option === "include" ? 1 : 0,
+      b.trip_type,
+      b.driver_payment_status,
+      b.payment_method,
+      req.params.id,
     ],
     () => res.redirect("/trips")
   );
 });
 
 // ------------------ DELETE TRIP ------------------
+
 app.post("/trips/:id/delete", (req, res) => {
-  db.run("DELETE FROM trips WHERE id=?", [req.params.id], (err) => {
-    if (err) {
-      console.error("Delete Trip Error:", err);
-      return res.status(500).send("Failed to delete trip.");
+  db.run(
+    "DELETE FROM trips WHERE id=?",
+    [req.params.id],
+    (err) => {
+      if (err) return res.status(500).send("Delete failed");
+      res.sendStatus(200);
     }
-    res.sendStatus(200);
-  });
+  );
 });
 
-// -----------------------------------------------------
-// DRIVERS MODULE
-// -----------------------------------------------------
+// ------------------ DRIVERS ------------------
 
-// List drivers (supports search)
 app.get("/drivers", (req, res) => {
-  const searchRaw = req.query.search || "";
-  let sql;
-  let params;
+  const search = req.query.search || "";
+  const like = `%${search}%`;
 
-  if (searchRaw) {
-    const like = `%${searchRaw}%`;
-    sql = `
-      SELECT * FROM drivers
-      WHERE name LIKE ? OR phone LIKE ? OR car LIKE ? OR car_number LIKE ?
-      ORDER BY created_at DESC
-    `;
-    params = [like, like, like, like];
-  } else {
-    sql = `SELECT * FROM drivers ORDER BY created_at DESC`;
-    params = [];
-  }
+  const sql = search
+    ? `SELECT * FROM drivers
+       WHERE name LIKE ? OR phone LIKE ? OR car LIKE ? OR car_number LIKE ?
+       ORDER BY created_at DESC`
+    : `SELECT * FROM drivers ORDER BY created_at DESC`;
 
-  db.all(sql, params, (err, drivers) => {
-    res.render("drivers", { drivers: drivers || [], search: searchRaw });
-  });
+  db.all(
+    sql,
+    search ? [like, like, like, like] : [],
+    (_, drivers) => {
+      res.render("drivers", {
+        drivers: drivers || [],
+        search,
+      });
+    }
+  );
 });
 
-// New driver form
+// ------------------ NEW DRIVER ------------------
+
 app.get("/drivers/new", (req, res) => res.render("new-driver"));
 
-// Add new driver
-app.post("/drivers/new", upload.fields([
-  { name: 'license_image', maxCount: 1 },
-  { name: 'car_image_front', maxCount: 1 },
-  { name: 'car_image_back', maxCount: 1 },
-  { name: 'car_image_left', maxCount: 1 },
-  { name: 'car_image_right', maxCount: 1 },
-]), (req, res) => {
-  const { name, phone, car, car_number, license, notes } = req.body;
-  const created_at = new Date().toISOString();
-  
-  const license_image = req.files['license_image'] ? req.files['license_image'][0].path : null;
-  const car_image_front = req.files['car_image_front'] ? req.files['car_image_front'][0].path : null;
-  const car_image_back = req.files['car_image_back'] ? req.files['car_image_back'][0].path : null;
-  const car_image_left = req.files['car_image_left'] ? req.files['car_image_left'][0].path : null;
-  const car_image_right = req.files['car_image_right'] ? req.files['car_image_right'][0].path : null;
-
-  db.run(
-    `INSERT INTO drivers VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [name, phone, car, car_number, license, notes, license_image, car_image_front, car_image_back, car_image_left, car_image_right, created_at],
-    () => res.redirect("/drivers")
-  );
-});
-
-// Edit driver form
-app.get("/drivers/:id/edit", (req, res) => {
-  db.get("SELECT * FROM drivers WHERE id=?", [req.params.id], (err, driver) => {
-    if (!driver) return res.status(404).send("Driver not found");
-    res.render("edit-driver", { driver });
-  });
-});
-
-// Update driver
-app.post("/drivers/:id/edit", (req, res) => {
-  const { name, phone, car, car_number, license, notes } = req.body;
-
-  db.run(
-    `UPDATE drivers
-     SET name=?, phone=?, car=?, car_number=?, license=?, notes=?
-     WHERE id=?`,
-    [name, phone, car, car_number, license, notes, req.params.id],
-    () => res.redirect("/drivers")
-  );
-});
-
-// Delete driver
-app.post("/drivers/:id/delete", (req, res) => {
-  db.run("DELETE FROM drivers WHERE id=?", [req.params.id], (err) => {
-    if (err) {
-      console.error("Delete Driver Error:", err);
-      return res.status(500).send("Failed to delete driver.");
+app.post(
+  "/drivers/new",
+  upload.fields([
+    { name: "license_image", maxCount: 1 },
+    { name: "car_image_front", maxCount: 1 },
+    { name: "car_image_back", maxCount: 1 },
+    { name: "car_image_left", maxCount: 1 },
+    { name: "car_image_right", maxCount: 1 },
+  ]),
+  (req, res) => {
+    if (
+      req.files &&
+      Object.values(req.files).some(
+        (arr) => Array.isArray(arr) && arr.length === 0
+      )
+    ) {
+      return res.send(
+        `<script>alert("Only JPG, PNG, WEBP images allowed");history.back();</script>`
+      );
     }
-    res.sendStatus(200);
-  });
+
+    if (!req.body.name)
+      return res.send(
+        `<script>alert('Name required');history.back();</script>`
+      );
+
+    db.run(
+      `
+      INSERT INTO drivers (
+        name, phone, car, car_number, license, notes,
+        license_image, car_image_front, car_image_back,
+        car_image_left, car_image_right, created_at
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+      `,
+      [
+        req.body.name,
+        req.body.phone || "",
+        req.body.car || "",
+        req.body.car_number || "",
+        req.body.license || "",
+        req.body.notes || "",
+        fixPath(req.files?.license_image?.[0]),
+        fixPath(req.files?.car_image_front?.[0]),
+        fixPath(req.files?.car_image_back?.[0]),
+        fixPath(req.files?.car_image_left?.[0]),
+        fixPath(req.files?.car_image_right?.[0]),
+        new Date().toISOString(),
+      ],
+      () => res.redirect("/drivers")
+    );
+  }
+);
+
+// ------------------ EDIT DRIVER (PAGE) ------------------
+function publicUrl(p) {
+  if (!p) return "";
+  return "/" + p.replace(/^\/?public\/?/, "").replace(/^\/+/, "");
+}
+app.get("/drivers/:id/edit", (req, res) => {
+  db.get(
+    "SELECT * FROM drivers WHERE id = ?",
+    [req.params.id],
+    (err, driver) => {
+      if (!driver) return res.status(404).send("Driver not found");
+
+      // 🔥 normalize image URLs
+      [
+        "license_image",
+        "car_image_front",
+        "car_image_back",
+        "car_image_left",
+        "car_image_right",
+      ].forEach((k) => {
+        driver[k] = publicUrl(driver[k]);
+      });
+
+      res.render("edit-driver", { driver });
+    }
+  );
+});
+// ------------------ EDIT DRIVER ------------------
+
+app.post(
+  "/drivers/:id/edit",
+  upload.fields([
+    { name: "license_image", maxCount: 1 },
+    { name: "car_image_front", maxCount: 1 },
+    { name: "car_image_back", maxCount: 1 },
+    { name: "car_image_left", maxCount: 1 },
+    { name: "car_image_right", maxCount: 1 },
+  ]),
+  (req, res) => { 
+  if (
+    req.files &&
+    Object.values(req.files).some(
+      (arr) => Array.isArray(arr) && arr.length === 0
+    )
+  ) {
+    return res.send(
+      `<script>alert("Only JPG, PNG, WEBP images allowed");history.back();</script>`
+    );
+  }
+
+    db.get(
+      "SELECT * FROM drivers WHERE id=?",
+      [req.params.id],
+      (_, driver) => {
+        if (!driver) return res.status(404).send("Driver not found");
+
+        const updated = {
+          license_image:
+            fixPath(req.files?.license_image?.[0]) || driver.license_image,
+          car_image_front:
+            fixPath(req.files?.car_image_front?.[0]) ||
+            driver.car_image_front,
+          car_image_back:
+            fixPath(req.files?.car_image_back?.[0]) ||
+            driver.car_image_back,
+          car_image_left:
+            fixPath(req.files?.car_image_left?.[0]) ||
+            driver.car_image_left,
+          car_image_right:
+            fixPath(req.files?.car_image_right?.[0]) ||
+            driver.car_image_right,
+        };
+
+        // delete replaced images
+        Object.keys(updated).forEach((k) => {
+          if (updated[k] !== driver[k]) deleteFile(driver[k]);
+        });
+
+        db.run(
+          `
+          UPDATE drivers SET
+            name=?, phone=?, car=?, car_number=?, license=?, notes=?,
+            license_image=?, car_image_front=?, car_image_back=?,
+            car_image_left=?, car_image_right=?
+          WHERE id=?
+          `,
+          [
+            req.body.name,
+            req.body.phone,
+            req.body.car,
+            req.body.car_number,
+            req.body.license,
+            req.body.notes,
+            updated.license_image,
+            updated.car_image_front,
+            updated.car_image_back,
+            updated.car_image_left,
+            updated.car_image_right,
+            req.params.id,
+          ],
+          () => res.redirect("/drivers")
+        );
+      }
+    );
+  }
+);
+
+// ------------------ DELETE DRIVER ------------------
+
+app.post("/drivers/:id/delete", (req, res) => {
+  db.get(
+    "SELECT * FROM drivers WHERE id=?",
+    [req.params.id],
+    (_, driver) => {
+      if (!driver) return res.sendStatus(404);
+
+      [
+        driver.license_image,
+        driver.car_image_front,
+        driver.car_image_back,
+        driver.car_image_left,
+        driver.car_image_right,
+      ].forEach(deleteFile);
+
+      db.run(
+        "DELETE FROM drivers WHERE id=?",
+        [req.params.id],
+        () => res.sendStatus(200)
+      );
+    }
+  );
 });
 
 // ------------------ AUTOCOMPLETE API ------------------
+
 app.get("/api/drivers", (req, res) => {
   const q = `%${req.query.search || ""}%`;
-
   db.all(
     `SELECT id, name, phone, car, car_number
      FROM drivers
@@ -794,16 +885,15 @@ app.get("/api/drivers", (req, res) => {
      ORDER BY name
      LIMIT 10`,
     [q],
-    (err, rows) => {
-      res.json(rows || []);
-    }
+    (_, rows) => res.json(rows || [])
   );
 });
 
 // ------------------ EXPORT CSV ------------------
+
 app.get("/export/csv", (req, res) => {
-  db.all("SELECT * FROM trips", [], (err, rows) => {
-    if (!rows || rows.length === 0) return res.send("No data!");
+  db.all("SELECT * FROM trips", [], (_, rows) => {
+    if (!rows || !rows.length) return res.send("No data!");
 
     const fields = Object.keys(rows[0]);
     const csv =
@@ -813,17 +903,13 @@ app.get("/export/csv", (req, res) => {
         .map((row) =>
           fields
             .map((f) => {
-             let v = row[f];
-             if (v === null || v === undefined) v = "";
-             v = String(v);
-
-            if (v.includes(",") || v.includes('"') || v.includes("\n")) {
-            v = `"${v.replace(/"/g, '""')}"`;
-           }
-
-
-            return v;
-
+              let v = row[f];
+              if (v == null) v = "";
+              v = String(v);
+              if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+                v = `"${v.replace(/"/g, '""')}"`;
+              }
+              return v;
             })
             .join(",")
         )
@@ -835,30 +921,33 @@ app.get("/export/csv", (req, res) => {
   });
 });
 
-// =====================================================
-// API → Trips for a given Month
-// =====================================================
+// ------------------ MONTH API ------------------
+
 app.get("/api/month-trips", (req, res) => {
-  const month = req.query.month;
-  if (!month) return res.json([]);
+  if (!req.query.month) return res.json([]);
 
   db.all(
-    `SELECT *
-     FROM trips
+    `SELECT * FROM trips
      WHERE departure_date LIKE ?
      ORDER BY departure_date, departure_time`,
-    [`${month}%`],
-    (err, rows) => {
-      if (err) {
-        console.error("Month Trips Error:", err);
-        return res.json([]);
-      }
-      res.json(rows || []);
-    }
+    [`${req.query.month}%`],
+    (_, rows) => res.json(rows || [])
   );
 });
 
+// ------------------ ERROR HANDLER ------------------
+
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.send(
+      `<script>alert("${err.message}");history.back();</script>`
+    );
+  }
+  next(err);
+});
+
 // ------------------ START SERVER ------------------
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running → http://localhost:${PORT}`);
 });
