@@ -10,6 +10,11 @@ const fs = require("fs");
 
 const app = express();
 const PORT = 3000;
+const uploadDir = path.join(__dirname, "public/uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 
 // ------------------ GLOBAL HELPERS (FIXED) ------------------
 
@@ -56,26 +61,24 @@ app.set("views", path.join(__dirname, "Views"));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "public/uploads/"),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + "-" + file.originalname),
+  filename: (req, file, cb) => {
+  const ext = path.extname(file.originalname);
+  const name = Date.now() + "-" + Math.round(Math.random() * 1e9);
+  cb(null, name + ext);
+}
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ["image/jpeg", "image/png", "image/webp"];
-
-  if (!allowed.includes(file.mimetype)) {
-    // ❗ IMPORTANT: pass false, not Error
-    return cb(null, false);
+  if (!file.mimetype.startsWith("image/")) {
+    return cb(new Error("Only image files are allowed"));
   }
-
   cb(null, true);
 };
-
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // optional: increase to 5MB
 });
 
 // ------------------ DATABASE INIT ------------------
@@ -698,16 +701,6 @@ app.post(
     { name: "car_image_right", maxCount: 1 },
   ]),
   (req, res) => {
-    if (
-      req.files &&
-      Object.values(req.files).some(
-        (arr) => Array.isArray(arr) && arr.length === 0
-      )
-    ) {
-      return res.send(
-        `<script>alert("Only JPG, PNG, WEBP images allowed");history.back();</script>`
-      );
-    }
 
     if (!req.body.name)
       return res.send(
@@ -780,16 +773,6 @@ app.post(
     { name: "car_image_right", maxCount: 1 },
   ]),
   (req, res) => { 
-  if (
-    req.files &&
-    Object.values(req.files).some(
-      (arr) => Array.isArray(arr) && arr.length === 0
-    )
-  ) {
-    return res.send(
-      `<script>alert("Only JPG, PNG, WEBP images allowed");history.back();</script>`
-    );
-  }
 
     db.get(
       "SELECT * FROM drivers WHERE id=?",
@@ -938,12 +921,12 @@ app.get("/api/month-trips", (req, res) => {
 // ------------------ ERROR HANDLER ------------------
 
 app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
+  if (err) {
     return res.send(
       `<script>alert("${err.message}");history.back();</script>`
     );
   }
-  next(err);
+  next();
 });
 
 // ------------------ START SERVER ------------------

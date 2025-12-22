@@ -68,54 +68,67 @@
 
     <!-- LICENSE IMAGE -->
     <div class="form-row">
-      <label>Driver License Image</label>
+  <label>Driver License Image</label>
 
-      <% if (driver.license_image) { %>
-        <img
-          src="<%= driver.license_image %>"
-          id="license_image_preview"
-          style="max-width: 200px; display: block; margin-bottom: 6px"
-        />
-      <% } %>
-
-
-      <input
-        type="file"
-        name="license_image"
-        onchange="previewImage('license_image_preview', this)"
-      />
-    </div>
-    <small class="muted">(Current image — upload to replace)</small>
-
-
-    <!-- CAR IMAGES -->
-    <% const carImages = [
-      ['Front', 'car_image_front'],
-      ['Back', 'car_image_back'],
-      ['Left', 'car_image_left'],
-      ['Right', 'car_image_right']
-    ]; %>
-
-    <% carImages.forEach(([label, field]) => { %>
-  <div class="form-row">
-    <label>Car Image (<%= label %>)</label>
-
+  <% if (driver.license_image) { %>
     <img
-      src="<%= driver[field] || '' %>"
-      id="<%= field %>_preview"
-      class="<%= driver[field] ? '' : 'hidden' %>"
-      style="max-width: 200px; margin-bottom: 6px;"
+      src="<%= driver.license_image %>"
+      id="license_image_preview"
+      style="max-width: 200px; display: block; margin-bottom: 6px"
     />
-
     <small class="muted">(Current image — upload to replace)</small>
+  <% } else { %>
+    <img
+      id="license_image_preview"
+      style="max-width: 200px; display: none; margin-bottom: 6px"
+    />
+  <% } %>
 
-    <input
+  <input
+    type="file"
+    name="license_image"
+    accept="image/*"
+    onchange="previewImage('license_image_preview', this)"
+  />
+</div>
+
+
+  
+    <!-- CAR IMAGES -->
+   <% const carImages = [
+   ['Front', 'car_image_front'],
+   ['Back', 'car_image_back'],
+   ['Left', 'car_image_left'],
+   ['Right', 'car_image_right']
+   ]; %>
+
+     <% carImages.forEach(([label, field]) => { %>
+     <div class="form-row">
+     <label>Car Image (<%= label %>)</label>
+
+     <% if (driver[field]) { %>
+      <img
+        src="<%= driver[field] %>"
+        id="<%= field %>_preview"
+        style="max-width: 200px; display: block; margin-bottom: 6px;"
+      />
+      <small class="muted">(Current image — upload to replace)</small>
+     <% } else { %>
+      <img
+        id="<%= field %>_preview"
+        style="max-width: 200px; display: none; margin-bottom: 6px;"
+      />
+     <% } %>
+
+     <input
       type="file"
       name="<%= field %>"
+      accept="image/*"
       onchange="previewImage('<%= field %>_preview', this)"
-    />
-  </div>
-<% }) %>
+     />
+     </div>
+     <% }) %>
+
 
       <!-- NOTES -->
       <div class="form-row" style="grid-column: 1 / -1">
