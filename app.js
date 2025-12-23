@@ -561,8 +561,13 @@ app.get("/referral/:referralName", (req, res) => {
 
 app.get("/trips/:id", (req, res) => {
   const sql = `
-    SELECT t.*, d.car_image_front, d.car_image_back,
-           d.car_image_left, d.car_image_right
+    SELECT
+      t.*,
+      d.license_image,
+      d.car_image_front,
+      d.car_image_back,
+      d.car_image_left,
+      d.car_image_right
     FROM trips t
     LEFT JOIN drivers d ON t.assigned_driver = d.name
     WHERE t.id = ?
@@ -571,16 +576,30 @@ app.get("/trips/:id", (req, res) => {
   db.get(sql, [req.params.id], (_, trip) => {
     if (!trip) return res.status(404).send("Trip not found");
 
+    // Normalize license image path
+    if (trip.license_image) {
+      trip.driver_license_image =
+     trip.license_image.replace(/^\/?public\/?/, "");
+     }
+
+    // Collect car images
     const imgs = [];
-    if (trip.car_image_front) imgs.push(trip.car_image_front);
-    if (trip.car_image_back) imgs.push(trip.car_image_back);
-    if (trip.car_image_left) imgs.push(trip.car_image_left);
-    if (trip.car_image_right) imgs.push(trip.car_image_right);
+    [
+      trip.car_image_front,
+      trip.car_image_back,
+      trip.car_image_left,
+      trip.car_image_right,
+    ].forEach((img) => {
+      if (img)
+        imgs.push(img.replace(/^\/?public\/?/, ""));
+    });
+
     trip.car_images = imgs;
 
     res.render("trip-details", { trip });
   });
 });
+
 
 app.get("/trips/:id/print", (req, res) => {
   db.get(
@@ -606,49 +625,38 @@ app.get("/trips/:id/edit", (req, res) => {
   );
 });
 
-app.post("/trips/:id/edit", (req, res) => {
-  const b = req.body;
-  if (!b.arrival_date || !b.arrival_time)
-    return res.send(
-      `<script>alert('Arrival date & time required');history.back();</script>`
-    );
+app.get("/trips/:id", (req, res) => {
+  const sql = `
+    SELECT
+      t.*,
+      d.license_image,
+      d.car_image_front,
+      d.car_image_back,
+      d.car_image_left,
+      d.car_image_right
+    FROM trips t
+    LEFT JOIN drivers d ON t.assigned_driver = d.name
+    WHERE t.id = ?
+  `;
 
-  db.run(
-    `
-    UPDATE trips SET
-      customer_name=?, phone_number=?, customer_id=?, referral=?,
-      departure_place=?, departure_date=?, departure_time=?,
-      arrival_place=?, arrival_date=?, arrival_time=?,
-      assigned_driver=?, assigned_car=?, driver_phone=?, car_number=?,
-      travelling_fee=?, includes_toll=?, trip_type=?,
-      driver_payment_status=?, payment_method=?
-    WHERE id=?
-    `,
-    [
-      b.customer_name,
-      b.phone_number,
-      b.customer_id || "",
-      b.referral || "",
-      b.departure_place,
-      b.departure_date,
-      b.departure_time,
-      b.arrival_place,
-      b.arrival_date,
-      b.arrival_time,
-      b.assigned_driver || "",
-      b.assigned_car || "",
-      b.driver_phone || "",
-      b.car_number || "",
-      Number(b.travelling_fee) || 0,
-      b.toll_option === "include" ? 1 : 0,
-      b.trip_type,
-      b.driver_payment_status,
-      b.payment_method,
-      req.params.id,
-    ],
-    () => res.redirect("/trips")
-  );
+  db.get(sql, [req.params.id], (_, trip) => {
+    if (!trip) return res.status(404).send("Trip not found");
+
+    // ✅ license image (already starts with /uploads)
+    trip.driver_license_image = trip.license_image || "";
+
+    // ✅ car images
+    trip.car_images = [
+      trip.car_image_front,
+      trip.car_image_back,
+      trip.car_image_left,
+      trip.car_image_right,
+    ].filter(Boolean);
+
+    res.render("trip-details", { trip });
+  });
 });
+
 
 // ------------------ DELETE TRIP ------------------
 

@@ -120,6 +120,16 @@
           <% } %>
         </div>
 
+        <!-- DRIVER'S LICENSE BOX -->
+        <div class="detail-box">
+          <h3>Driver's License</h3>
+          <% if (trip.driver_license_image && trip.driver_license_image !== "") { %>
+            <img src="<%= trip.driver_license_image %>" alt="Driver's License" style="max-width: 100%; margin-bottom: 10px;">
+          <% } else { %>
+            <p>No driver's license image available.</p>
+          <% } %>
+        </div>
+        
       </div>
 
       <p class="muted small" style="margin-top:20px;">
