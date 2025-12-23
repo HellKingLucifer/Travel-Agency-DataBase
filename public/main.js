@@ -179,11 +179,15 @@ if (confirmBtn) {
             `;
 
             div.addEventListener("click", () => {
-              driverInput.value = d.name;
-              if (carInput) carInput.value = d.car || "";
-              if (phoneInput) phoneInput.value = d.phone || "";
-              if (carNoInput) carNoInput.value = d.car_number || "";
-
+              if (window.updateDriverInfo) {
+                window.updateDriverInfo(d);
+              } else {
+                driverInput.value = d.name;
+                if (carInput) carInput.value = d.car || "";
+                if (phoneInput) phoneInput.value = d.phone || "";
+                if (carNoInput) carNoInput.value = d.car_number || "";
+              }
+              
               driverInput.readOnly = true;
               clearSuggestions();
             });

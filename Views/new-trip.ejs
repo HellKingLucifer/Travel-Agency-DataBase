@@ -157,12 +157,12 @@
             </div>
             <div class="form-row">
               <label>Driver's License Image</label>
-              <input
+              <!-- <input
                 type="file"
                 name="license_image"
                 accept="image/*"
                 onchange="previewImage(event, 'license_image_preview')"
-              />
+              /> -->
               <img
                 id="license_image_preview"
                 src="#"
@@ -173,12 +173,12 @@
 
             <div class="form-row">
               <label>Car Image (Front)</label>
-              <input
+              <!-- <input
                 type="file"
                 name="car_image_front"
                 accept="image/*"
                 onchange="previewImage(event, 'car_image_front_preview')"
-              />
+              /> -->
               <img
                 id="car_image_front_preview"
                 src="#"
@@ -189,12 +189,12 @@
 
             <div class="form-row">
               <label>Car Image (Back)</label>
-              <input
+              <!-- <input
                 type="file"
                 name="car_image_back"
                 accept="image/*"
                 onchange="previewImage(event, 'car_image_back_preview')"
-              />
+              /> -->
               <img
                 id="car_image_back_preview"
                 src="#"
@@ -205,12 +205,12 @@
 
             <div class="form-row">
               <label>Car Image (Left)</label>
-              <input
+              <!-- <input
                 type="file"
                 name="car_image_left"
                 accept="image/*"
                 onchange="previewImage(event, 'car_image_left_preview')"
-              />
+              /> -->
               <img
                 id="car_image_left_preview"
                 src="#"
@@ -221,12 +221,12 @@
 
             <div class="form-row">
               <label>Car Image (Right)</label>
-              <input
+              <!-- <input
                 type="file"
                 name="car_image_right"
                 accept="image/*"
                 onchange="previewImage(event, 'car_image_right_preview')"
-              />
+              /> -->
               <img
                 id="car_image_right_preview"
                 src="#"
@@ -325,7 +325,7 @@
       });
 
       // Updates the driver info when a suggestion is clicked
-      function updateDriverInfo(driver) {
+      window.updateDriverInfo = function (driver) {
         document.getElementById('driver-search').value = driver.name;
         document.getElementById('assigned_car').value = driver.car;
         document.getElementById('driver_phone').value = driver.phone;
@@ -337,18 +337,21 @@
         updateImagePreview('car_image_back_preview', driver.car_image_back);
         updateImagePreview('car_image_left_preview', driver.car_image_left);
         updateImagePreview('car_image_right_preview', driver.car_image_right);
-      }
+      };
 
-      function updateImagePreview(imgId, imagePath) {
+      window.updateImagePreview = function (imgId, imagePath) {
         const img = document.getElementById(imgId);
+
         if (imagePath) {
-          img.src = '/uploads/' + imagePath;
+          img.src = imagePath.startsWith('/')
+            ? imagePath
+            : '/uploads/' + imagePath;
+
           img.style.display = 'block';
         } else {
-          img.src = '#';
           img.style.display = 'none';
         }
-      }
+      };
     </script>
   </body>
 </html>

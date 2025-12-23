@@ -861,8 +861,19 @@ app.post("/drivers/:id/delete", (req, res) => {
 
 app.get("/api/drivers", (req, res) => {
   const q = `%${req.query.search || ""}%`;
+
   db.all(
-    `SELECT id, name, phone, car, car_number
+    `SELECT
+       id,
+       name,
+       phone,
+       car,
+       car_number,
+       license_image,
+       car_image_front,
+       car_image_back,
+       car_image_left,
+       car_image_right
      FROM drivers
      WHERE name LIKE ?
      ORDER BY name
@@ -871,6 +882,7 @@ app.get("/api/drivers", (req, res) => {
     (_, rows) => res.json(rows || [])
   );
 });
+
 
 // ------------------ EXPORT CSV ------------------
 
