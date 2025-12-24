@@ -41,93 +41,96 @@
      </p>
 
       <div class="details-grid">
-
-        <!-- CUSTOMER BOX -->
-        <div class="detail-box">
-          <h3>Customer Details</h3>
-          <p><strong>Name:</strong> <%= trip.customer_name %></p>
-          <p><strong>Phone:</strong> <%= trip.phone_number %></p>
-          <% if (trip.customer_id) { %>
-            <p><strong>Customer ID:</strong> <%= trip.customer_id %></p>
-          <% } %>
-          <% if (trip.referral) { %>
-            <p><strong>Referral:</strong> <%= trip.referral %></p>
-          <% } %>
-        </div>
-
-        <!-- ROUTE BOX -->
-        <div class="detail-box">
-          <h3>Travel Route</h3>
-
-          <p>
-            <img src="/icons/departure.svg" class="inline-icon">
-            <strong>From:</strong> <%= trip.departure_place %>
-          </p>
-          <p class="muted small"><%= trip.departure_date %> — <%= trip.departure_time %></p>
-
-          <p style="margin-top:10px;">
-            <img src="/icons/arrival.svg" class="inline-icon">
-            <strong>To:</strong> <%= trip.arrival_place %>
-          </p>
-          <p class="muted small"><%= trip.arrival_date %> — <%= trip.arrival_time %></p>
-        </div>
-
-        <!-- DRIVER BOX -->
-        <div class="detail-box">
-          <h3>Driver & Vehicle</h3>
-
-          <p><strong>Driver:</strong> <%= trip.assigned_driver || "-" %></p>
-          <p><strong>Driver Phone:</strong> <%= trip.driver_phone || "-" %></p>
-
-          <p style="margin-top:10px;"><strong>Car:</strong> <%= trip.assigned_car || "-" %></p>
-          <p><strong>Car Number:</strong> <%= trip.car_number || "-" %></p>
-        </div>
-
-        <!-- PAYMENT BOX -->
-        <div class="detail-box">
-          <h3>Payment</h3>
-          <p><strong>Fee:</strong> ₹<%= Number(trip.travelling_fee).toFixed(2) %></p>
-
-          <p><strong>Driver Payment:</strong> <%= trip.driver_payment_status %></p>
-          <% if (trip.driver_payment_status) { %>
-            <p><strong>Payment Method:</strong> <%= trip.payment_method %></p>
-          <% } %>
-
-          <% if (trip.includes_toll) { %>
-            <span class="badge badge-yes">
-              <img class="badge-icon" src="/icons/toll.svg">
-              Toll Included
-            </span>
-          <% } else { %>
-            <span class="badge badge-no">
-              <img class="badge-icon" src="/icons/toll.svg">
-              Toll Not Included
-            </span>
-          <% } %>
+        <div>
+            <!-- CUSTOMER BOX -->
+            <div class="detail-box">
+              <h3>Customer Details</h3>
+              <p><strong>Name:</strong> <%= trip.customer_name %></p>
+              <p><strong>Phone:</strong> <%= trip.phone_number %></p>
+              <% if (trip.customer_id) { %>
+                <p><strong>Customer ID:</strong> <%= trip.customer_id %></p>
+              <% } %>
+              <% if (trip.referral) { %>
+                <p><strong>Referral:</strong> <%= trip.referral %></p>
+              <% } %>
+            </div>
+    
+            <!-- ROUTE BOX -->
+            <div class="detail-box">
+              <h3>Travel Route</h3>
+    
+              <p>
+                <img src="/icons/departure.svg" class="inline-icon">
+                <strong>From:</strong> <%= trip.departure_place %>
+              </p>
+              <p class="muted small"><%= trip.departure_date %> — <%= trip.departure_time %></p>
+    
+              <p style="margin-top:10px;">
+                <img src="/icons/arrival.svg" class="inline-icon">
+                <strong>To:</strong> <%= trip.arrival_place %>
+              </p>
+              <p class="muted small"><%= trip.arrival_date %> — <%= trip.arrival_time %></p>
+            </div>
+    
+            <!-- DRIVER BOX -->
+            <div class="detail-box">
+              <h3>Driver & Vehicle</h3>
+    
+              <p><strong>Driver:</strong> <%= trip.assigned_driver || "-" %></p>
+              <p><strong>Driver Phone:</strong> <%= trip.driver_phone || "-" %></p>
+    
+              <p style="margin-top:10px;"><strong>Car:</strong> <%= trip.assigned_car || "-" %></p>
+              <p><strong>Car Number:</strong> <%= trip.car_number || "-" %></p>
+            </div>
+    
+            <!-- PAYMENT BOX -->
+            <div class="detail-box">
+              <h3>Payment</h3>
+              <p><strong>Fee:</strong> ₹<%= Number(trip.travelling_fee).toFixed(2) %></p>
+    
+              <p><strong>Driver Payment:</strong> <%= trip.driver_payment_status %></p>
+              <% if (trip.driver_payment_status) { %>
+                <p><strong>Payment Method:</strong> <%= trip.payment_method %></p>
+              <% } %>
+    
+              <% if (trip.includes_toll) { %>
+                <span class="badge badge-yes">
+                  <img class="badge-icon" src="/icons/toll.svg">
+                  Toll Included
+                </span>
+              <% } else { %>
+                <span class="badge badge-no">
+                  <img class="badge-icon" src="/icons/toll.svg">
+                  Toll Not Included
+                </span>
+              <% } %>
+            </div>
         </div>
         
-        <!-- CAR IMAGES BOX -->
-        <div class="detail-box">
-          <h3>Car Images</h3>
-          <% if (trip.car_images && trip.car_images.length > 0) { %>
-            <div class="car-images">
-              <% trip.car_images.forEach(function(image) { %>
-                <img src="<%= image %>" alt="Car Image" style="max-width: 100%; margin-bottom: 10px;">
-              <% }); %>
+        <div>
+            <!-- CAR IMAGES BOX -->
+            <div class="detail-box">
+              <h3>Car Images</h3>
+              <% if (trip.car_images && trip.car_images.length > 0) { %>
+                <div class="car-images">
+                  <% trip.car_images.forEach(function(image) { %>
+                    <img src="<%= image %>" alt="Car Image">
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <p>No car images available.</p>
+              <% } %>
             </div>
-          <% } else { %>
-            <p>No car images available.</p>
-          <% } %>
-        </div>
-
-        <!-- DRIVER'S LICENSE BOX -->
-        <div class="detail-box">
-          <h3>Driver's License</h3>
-          <% if (trip.driver_license_image && trip.driver_license_image !== "") { %>
-            <img src="<%= trip.driver_license_image %>" alt="Driver's License" style="max-width: 100%; margin-bottom: 10px;">
-          <% } else { %>
-            <p>No driver's license image available.</p>
-          <% } %>
+    
+            <!-- DRIVER'S LICENSE BOX -->
+            <div class="detail-box">
+              <h3>Driver's License</h3>
+              <% if (trip.driver_license_image && trip.driver_license_image !== "") { %>
+                <img src="<%= trip.driver_license_image %>" alt="Driver's License">
+              <% } else { %>
+                <p>No driver's license image available.</p>
+              <% } %>
+            </div>
         </div>
         
       </div>
